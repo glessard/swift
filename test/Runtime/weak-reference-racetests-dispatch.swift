@@ -39,7 +39,7 @@ WeakReferenceRaceTests.test("class instance property [SR-192] (copy)") {
     q.async(execute: closure)
   }
 
-  q.async(flags: .barrier) {}
+  q.sync(flags: .barrier) {}
 }
 
 WeakReferenceRaceTests.test("class instance property [SR-192] (load)") {
@@ -59,7 +59,7 @@ WeakReferenceRaceTests.test("class instance property [SR-192] (load)") {
     q.async(execute: closure)
   }
 
-  q.async(flags: .barrier) {}
+  q.sync(flags: .barrier) {}
 }
 
 WeakReferenceRaceTests.test("direct capture (copy)") {
@@ -78,7 +78,7 @@ WeakReferenceRaceTests.test("direct capture (copy)") {
     q.async(execute: closure)
   }
 
-  q.async(flags: .barrier) {}
+  q.sync(flags: .barrier) {}
 }
 
 WeakReferenceRaceTests.test("direct capture (load)") {
@@ -97,7 +97,7 @@ WeakReferenceRaceTests.test("direct capture (load)") {
     q.async(execute: closure)
   }
 
-  q.async(flags: .barrier) {}
+  q.sync(flags: .barrier) {}
 }
 
 runAllTests()

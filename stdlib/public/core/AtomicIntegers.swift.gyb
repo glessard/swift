@@ -1,0 +1,109 @@
+% for signed in (True, False):
+% u = '' if signed else 'U'
+% for (type, bits, value) in [('Int32', 'Int32', '_value'), ('Int64', 'Int64', '_value'), ('Int', 'Word', '_builtinWordValue')]:
+extension Atomic {
+  public struct ${u}${type} {
+    @_versioned internal var _value: Builtin.${bits}
+
+    public init(_ value: Swift.${u}${type} = 0) {
+      _value = value.${value}
+    }
+
+    @inline(__always)
+    public mutating func load(order: LoadMemoryOrder = .relaxed) -> Swift.${u}${type} {
+      let v: Builtin.${bits}
+      switch order {
+% for order, llvm_order in [('relaxed', 'monotonic'), ('acquire', 'acquire'), ('sequential', 'seqcst')]:
+      case .${order}:
+        v = Builtin.atomicload_${llvm_order}_${bits}(__unsafe_address(&_value))
+% end # order
+      }
+      return Swift.${u}${type}(v)
+    }
+
+    @inline(__always)
+    public mutating func store(_ value: Swift.${u}${type}, order: StoreMemoryOrder = .relaxed) {
+      switch order {
+% for order, llvm_order in [('relaxed', 'monotonic'), ('release', 'release'), ('sequential', 'seqcst')]:
+      case .${order}:
+        Builtin.atomicstore_${llvm_order}_${bits}(__unsafe_address(&_value), value.${value})
+% end # order
+      }
+    }
+
+% maxop = 'max' if signed else 'umax'
+% minop = 'min' if signed else 'umin'
+% for fname, op in [('swap', 'xchg'), ('add', 'add'), ('subtract', 'sub'), ('min', minop), ('max', maxop), ('bitwiseOr', 'or'), ('bitwiseXor', 'xor'), ('bitwiseAnd', 'and'), ('bitwiseNand', 'nand')]:
+    @inline(__always) @discardableResult
+    public mutating func ${fname}(_ value: Swift.${u}${type}, order: MemoryOrder = .relaxed) -> Swift.${u}${type} {
+      let v: Builtin.${bits}
+      switch order {
+% for order, llvm_order in [('relaxed', 'monotonic'), ('acquire', 'acquire'), ('release', 'release'), ('acqrel', 'acqrel'), ('sequential', 'seqcst')]:
+      case .${order}:
+        v = Builtin.atomicrmw_${op}_${llvm_order}_${bits}(__unsafe_address(&_value), value.${value})
+% end # order
+      }
+      return Swift.${u}${type}(v)
+    }
+% end # fname, op
+
+    @inline(__always) @discardableResult
+    public mutating func increment(order: MemoryOrder = .relaxed) -> Swift.${u}${type} {
+      return add(1, order: order)
+    }
+
+    @inline(__always) @discardableResult
+    public mutating func decrement(order: MemoryOrder = .relaxed) -> Swift.${u}${type} {
+      return subtract(1, order: order)
+    }
+
+% for strength in [ '' ]: #, 'Weak' ]:
+% for inout in (True, False):
+% qualifier = 'inout ' if inout else ''
+    @inline(__always) @discardableResult
+    public mutating func compareAndSwap${strength}(
+      current: ${qualifier}Swift.${u}${type}, future: Swift.${u}${type},
+      orderSuccess: MemoryOrder = .relaxed,
+      orderFailure: LoadMemoryOrder = .relaxed) -> Bool {
+% var = 'r' if inout else '_'
+% if inout:
+      let ${var}: Builtin.${bits}
+% end # if inout
+      let s: Builtin.Int1
+      let a = __unsafe_address(&_value)
+      let c = current.${value}
+      let f = future.${value}
+% kind = '_weak' if strength == 'Weak' else ''
+      switch (orderSuccess, orderFailure) {
+      case (.relaxed, .relaxed):
+        (${var}, s) = Builtin.cmpxchg${kind}_monotonic_monotonic_${bits}(a, c, f)
+      case (.acquire, .relaxed):
+        (${var}, s) = Builtin.cmpxchg${kind}_acquire_monotonic_${bits}(a, c, f)
+      case (.acquire, .acquire):
+        (${var}, s) = Builtin.cmpxchg${kind}_acquire_acquire_${bits}(a, c, f)
+      case (.release, .relaxed):
+        (${var}, s) = Builtin.cmpxchg${kind}_release_monotonic_${bits}(a, c, f)
+      case (.acqrel, .relaxed):
+        (${var}, s) = Builtin.cmpxchg${kind}_acqrel_monotonic_${bits}(a, c, f)
+      case (.acqrel, .acquire):
+        (${var}, s) = Builtin.cmpxchg${kind}_acqrel_acquire_${bits}(a, c, f)
+      case (.sequential, .relaxed):
+        (${var}, s) = Builtin.cmpxchg${kind}_seqcst_monotonic_${bits}(a, c, f)
+      case (.sequential, .acquire):
+        (${var}, s) = Builtin.cmpxchg${kind}_seqcst_acquire_${bits}(a, c, f)
+      case (.sequential, .sequential):
+        (${var}, s) = Builtin.cmpxchg${kind}_seqcst_seqcst_${bits}(a, c, f)
+      default:
+        fatalError("memory order combination invalid in \(#function): \(orderSuccess), \(orderFailure)")
+      }
+% if inout:
+      current = Swift.${u}${type}(${var})
+% end # if inout
+      return Bool(s)
+    }
+% end # for inout
+% end # strength
+  }
+}
+% end # bits
+% end # signed

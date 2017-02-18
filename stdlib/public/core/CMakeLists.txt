@@ -162,6 +162,8 @@ set(SWIFTLIB_ESSENTIAL
 set(SWIFTLIB_SOURCES
   ${SWIFTLIB_ESSENTIAL}
   ### PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER ###
+  Atomics.swift
+  AtomicIntegers.swift.gyb
   Availability.swift
   CollectionOfOne.swift
   ExistentialCollection.swift.gyb

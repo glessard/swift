@@ -178,5 +178,6 @@
     "Comparable.swift",
     "Hashable.swift",
     "Codable.swift"
+    "Atomics.swift"
   ]
 }

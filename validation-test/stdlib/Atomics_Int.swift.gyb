@@ -1,27 +1,28 @@
-// RUN: rm -rf %t
-// RUN: mkdir -p %t
-//
-// RUN: %target-build-swift -module-name a %s -o %t.out -O
-// RUN: %target-run %t.out
+// RUN: %target-run-simple-swiftgyb
 // REQUIRES: executable_test
 
 import SwiftPrivate
 import StdlibUnittest
 
-#if os(OSX) || os(iOS) || os(watchOS) || os(tvOS)
-import Darwin
-#elseif os(Linux)
-import Glibc
-#endif
-
 var AtomicIntTestSuite = TestSuite("AtomicInt")
 
-AtomicIntTestSuite.test("Basic Atomics, Int") {
-  var i = Atomic.Int64()
+% for signed in (True, False):
+% intType = 'Int' if signed else 'UInt'
+% for bits in [ '32', '64', '' ]:
 
-  let r1 = Int64(bitPattern: rand64())
-  let r2 = Int64(bitPattern: rand64())
-  let r3 = Int64(bitPattern: rand64())
+AtomicIntTestSuite.test("Basic Atomics, ${intType}${bits}") {
+  var i = Atomic.${intType}${bits}()
+
+% if bits == '64':
+% label = 'bitPattern: ' if signed else ''
+  let r1 = ${intType}${bits}(${label}rand64())
+  let r2 = ${intType}${bits}(${label}rand64())
+  let r3 = ${intType}${bits}(${label}rand64())
+% else:
+  let r1 = ${intType}${bits}(truncatingBitPattern: rand64())
+  let r2 = ${intType}${bits}(truncatingBitPattern: rand64())
+  let r3 = ${intType}${bits}(truncatingBitPattern: rand64())
+% end # if bits
 
   i.store(r1)
   expectEqual(r1, i.load())
@@ -93,6 +94,7 @@ AtomicIntTestSuite.test("Basic Atomics, Int") {
   expectEqual(r2, j)
   expectEqual(r3, i.load())
 }
+% end # bits
+% end # signed
 
 runAllTests()
-

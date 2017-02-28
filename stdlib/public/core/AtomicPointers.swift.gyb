@@ -1,0 +1,94 @@
+% for pointertype in [ 'UnsafeRawPointer', 'UnsafeMutableRawPointer', 'UnsafePointer<T>', 'UnsafeMutablePointer<T>', 'OpaquePointer' ]:
+extension Atomic {
+  public struct ${pointertype} {
+    @_versioned internal var _rawValue: Builtin.Word
+
+    public init(_ pointer: Swift.${pointertype}? = nil) {
+      _rawValue = Swift.UInt(bitPattern: pointer)._builtinWordValue
+    }
+
+    @inline(__always)
+    public mutating func load(order: LoadMemoryOrder = .relaxed) -> Swift.${pointertype}? {
+      let rawValue: Builtin.Word
+      switch order {
+% for order, llvm_order in [('relaxed', 'monotonic'), ('acquire', 'acquire'), ('sequential', 'seqcst')]:
+      case .${order}:
+        rawValue = Builtin.atomicload_${llvm_order}_Word(__unsafe_address(&_rawValue))
+% end # order
+      }
+      return Swift.${pointertype}(bitPattern: Swift.Int(rawValue))
+    }
+
+    @inline(__always)
+    public mutating func store(_ pointer: Swift.${pointertype}?, order: StoreMemoryOrder = .relaxed) {
+      let newValue = Swift.UInt(bitPattern: pointer)._builtinWordValue
+      switch order {
+% for order, llvm_order in [('relaxed', 'monotonic'), ('release', 'release'), ('sequential', 'seqcst')]:
+      case .${order}:
+        Builtin.atomicstore_${llvm_order}_Word(__unsafe_address(&_rawValue), newValue)
+% end # order
+      }
+    }
+
+    @inline(__always) @discardableResult
+    public mutating func swap(_ pointer: Swift.${pointertype}?, order: MemoryOrder = .relaxed) -> Swift.${pointertype}? {
+      let oldValue: Builtin.Word
+      let newValue = Swift.UInt(bitPattern: pointer)._builtinWordValue
+      switch order {
+% for order, llvm_order in [('relaxed', 'monotonic'), ('acquire', 'acquire'), ('release', 'release'), ('acqrel', 'acqrel'), ('sequential', 'seqcst')]:
+      case .${order}:
+        oldValue = Builtin.atomicrmw_xchg_${llvm_order}_Word(__unsafe_address(&_rawValue), newValue)
+% end # order
+      }
+      return Swift.${pointertype}(bitPattern: Swift.Int(oldValue))
+    }
+
+% for strength in [ '' ]: #, 'Weak' ]:
+% for inout in (True, False):
+% qualifier = 'inout ' if inout else ''
+    @inline(__always) @discardableResult
+    public mutating func compareAndSwap${strength}(
+      current: ${qualifier}Swift.${pointertype}?, future: Swift.${pointertype}?,
+      orderSuccess: MemoryOrder = .relaxed,
+      orderFailure: LoadMemoryOrder = .relaxed) -> Bool {
+% var = 'oldValue' if inout else '_'
+% if inout:
+      let ${var}: Builtin.Word
+% end # if inout
+      let s: Builtin.Int1
+      let a = __unsafe_address(&_rawValue)
+      let c = Swift.UInt(bitPattern: current)._builtinWordValue
+      let f = Swift.UInt(bitPattern: future)._builtinWordValue
+% kind = '_weak' if strength == 'Weak' else ''
+      switch (orderSuccess, orderFailure) {
+      case (.relaxed, .relaxed):
+        (${var}, s) = Builtin.cmpxchg${kind}_monotonic_monotonic_Word(a, c, f)
+      case (.acquire, .relaxed):
+        (${var}, s) = Builtin.cmpxchg${kind}_acquire_monotonic_Word(a, c, f)
+      case (.acquire, .acquire):
+        (${var}, s) = Builtin.cmpxchg${kind}_acquire_acquire_Word(a, c, f)
+      case (.release, .relaxed):
+        (${var}, s) = Builtin.cmpxchg${kind}_release_monotonic_Word(a, c, f)
+      case (.acqrel, .relaxed):
+        (${var}, s) = Builtin.cmpxchg${kind}_acqrel_monotonic_Word(a, c, f)
+      case (.acqrel, .acquire):
+        (${var}, s) = Builtin.cmpxchg${kind}_acqrel_acquire_Word(a, c, f)
+      case (.sequential, .relaxed):
+        (${var}, s) = Builtin.cmpxchg${kind}_seqcst_monotonic_Word(a, c, f)
+      case (.sequential, .acquire):
+        (${var}, s) = Builtin.cmpxchg${kind}_seqcst_acquire_Word(a, c, f)
+      case (.sequential, .sequential):
+        (${var}, s) = Builtin.cmpxchg${kind}_seqcst_seqcst_Word(a, c, f)
+      default:
+        fatalError("memory order combination invalid in \(#function): \(orderSuccess), \(orderFailure)")
+      }
+% if inout:
+      current = Swift.${pointertype}(bitPattern: Swift.Int(${var}))
+% end # if inout
+      return Bool(s)
+    }
+% end # for inout
+% end # strength
+  }
+}
+% end # pointertype

@@ -179,6 +179,7 @@
     "Hashable.swift",
     "Codable.swift"
     "Atomics.swift",
-    "AtomicIntegers.swift"
+    "AtomicIntegers.swift",
+    "AtomicPointers.swift"
   ]
 }

@@ -164,6 +164,7 @@ set(SWIFTLIB_SOURCES
   ### PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER ###
   Atomics.swift
   AtomicIntegers.swift.gyb
+  AtomicPointers.swift.gyb
   Availability.swift
   CollectionOfOne.swift
   ExistentialCollection.swift.gyb

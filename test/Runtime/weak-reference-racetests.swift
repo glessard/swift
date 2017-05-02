@@ -104,9 +104,9 @@ struct RaceTest_directCaptureLoad: WeakReferenceRaceTest {
   func makeRaceData() -> WeakReferenceRaceData {
     weak var wref = Thing()
     return WeakReferenceRaceData {
-      let nbox = WBox<Thing>()
-      nbox.wref = wref
-      _blackHole(nbox)
+      if let ref = wref {
+        _blackHole(ref)
+      }
     }
   }
 }

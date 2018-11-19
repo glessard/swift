@@ -36,6 +36,7 @@ set(SWIFTLIB_ESSENTIAL
   BridgeObjectiveC.swift
   BridgeStorage.swift
   BridgingBuffer.swift
+  BufferMutableCollection.swift
   Builtin.swift
   BuiltinMath.swift.gyb
   Character.swift

@@ -328,6 +328,13 @@ extension MutableCollection where Self : BidirectionalCollection {
       return index(startIndex, offsetBy: numericCast(offset))
     }
 
+    return try _partition(by: belongsInSecondPartition)
+  }
+
+  @inlinable
+  mutating func _partition(
+    by belongsInSecondPartition: (Element) throws -> Bool
+  ) rethrows -> Index {
     var lo = startIndex
     var hi = endIndex
 
@@ -443,6 +450,13 @@ extension MutableCollection where Self : RandomAccessCollection {
   ///   Swift.
   @inlinable
   public mutating func shuffle<T: RandomNumberGenerator>(
+    using generator: inout T
+    ) {
+      _shuffle(using: &generator)
+  }
+
+  @inlinable
+  mutating func _shuffle<T: RandomNumberGenerator>(
     using generator: inout T
   ) {
     let count = self.count

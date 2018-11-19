@@ -169,6 +169,7 @@
     "Pointer.swift",
     "UnsafePointer.swift",
     "UnsafeRawPointer.swift",
+    "BufferMutableCollection.swift",
     "UnsafeBufferPointer.swift",
     "UnsafeRawBufferPointer.swift"
   ],

@@ -324,6 +324,9 @@ UnsafeMutableRawBufferPointerTestSuite.test("changeElementViaBuffer") {
   expectEqual(1, uint8Ptr[1])
   expectEqual(0, uint8Ptr[2])
   expectEqual(UInt8.max, uint8Ptr[count-1])
+
+  buffer[0...1] = buffer[1...]
+  expectEqual(buffer[1], buffer[2])
 }
 
 UnsafeMutableBufferPointerTestSuite.test("changeElementViaBuffer") {
@@ -385,6 +388,9 @@ UnsafeMutableBufferPointerTestSuite.test("changeElementViaBuffer") {
   expectEqual(1.0, allocated[1])
   expectEqual(0.0, allocated[2])
   expectEqual(-1.0, allocated[count-1])
+
+  buffer[0...1] = buffer[1...]
+  expectEqual(buffer[1], buffer[2])
 }
 
 let bufCount = 4

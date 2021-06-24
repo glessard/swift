@@ -361,6 +361,25 @@ UnsafeMutableBufferPointerTestSuite.test("withContiguous(Mutable)StorageIfAvaila
   expectEqual(result1, result2)
 }
 
+import struct Foundation.Date
+
+UnsafeMutableBufferPointerTestSuite.test("initialize(from: Slice)") {
+  let o = 1
+  let c = 10_000_000
+  let a = Slice(base: Array( 0..<c), bounds: o..<c)
+
+  let buffer = UnsafeMutableBufferPointer<Int>.allocate(capacity: c-o)
+  defer { buffer.deallocate() }
+
+  let s = Date()
+  let (_, i) = buffer.initialize(from: a)
+  print(Date().timeIntervalSince(s))
+  expectEqual(i, c-o)
+
+  let t = buffer.indices.randomElement()!
+  expectEqual(a[t+o], buffer[t])
+}
+
 UnsafeMutableBufferPointerTestSuite.test("Slice.withContiguousStorageIfAvailable") {
   guard #available(macOS 10.16, iOS 14.0, watchOS 7.0, tvOS 14.0, *) else {
     return

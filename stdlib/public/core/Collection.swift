@@ -1671,3 +1671,19 @@ extension Collection where SubSequence == Self {
     self = self[idx..<endIndex]
   }
 }
+
+extension Collection where Iterator == IndexingIterator<Self> {
+  public func _copyContents(
+    initializing buffer: UnsafeMutableBufferPointer<Element>
+  ) -> (Iterator, UnsafeMutableBufferPointer<Element>.Index) {
+    if let (_, copied) = self.withContiguousStorageIfAvailable({
+      $0._copyContents(initializing: buffer)
+    }) {
+      let distance = buffer.distance(from: buffer.startIndex, to: copied)
+      let i = index(startIndex, offsetBy: distance)
+      return (IndexingIterator(_elements: self, _position: i), copied)
+    }
+
+    return _copySequenceContents(initializing: buffer)
+  }
+}

@@ -762,6 +762,20 @@ extension UnsafeMutableBufferPointer {
     where S.Element == Element {
     return source._copyContents(initializing: self)
   }
+
+  @inlinable // unsafe-performance
+  public func initialize<C: Collection>(from source: C) -> (C.Iterator, Index)
+    where C.Element == Element, C.Iterator == IndexingIterator<C> {
+    if let (_, copied) = source.withContiguousStorageIfAvailable({
+      $0._copyContents(initializing: self)
+    }) {
+      let delta = distance(from: startIndex, to: copied)
+      let i = source.index(source.startIndex, offsetBy: delta)
+      return (IndexingIterator(_elements: source, _position: i), copied)
+    }
+
+    return source._copyContents(initializing: self)
+  }
 }
 
 // ${'Local Variables'}:

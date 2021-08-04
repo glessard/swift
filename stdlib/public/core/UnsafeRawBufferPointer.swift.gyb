@@ -664,7 +664,6 @@ extension Unsafe${Mutable}RawBufferPointer {
   public func initializeMemory<S: Sequence>(
     as type: S.Element.Type, from source: S
   ) -> (unwritten: S.Iterator, initialized: UnsafeMutableBufferPointer<S.Element>) {
-    // TODO: Optimize where `C` is a `ContiguousArrayBuffer`.
 
     let elementStride = MemoryLayout<S.Element>.stride
 
@@ -677,6 +676,14 @@ extension Unsafe${Mutable}RawBufferPointer {
         "no memory available to initialize from source")
       let unwritten = source.makeIterator()
       return (unwritten, UnsafeMutableBufferPointer(start: nil, count: 0))
+    }
+
+    if let sourceCount = source.withContiguousStorageIfAvailable({ $0.count }) {
+      let typedBase = base.bindMemory(to: S.Element.self, capacity: sourceCount)
+      let buf = UnsafeMutableBufferPointer(start: typedBase, count: sourceCount)
+      let (unwritten, written) = source._copyContents(initializing: buf)
+      _internalInvariant(written == sourceCount)
+      return (unwritten, buf)
     }
 
     var written = 0

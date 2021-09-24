@@ -729,6 +729,58 @@ extension Unsafe${Mutable}RawBufferPointer {
     return Unsafe${Mutable}BufferPointer<T>(
       start: Unsafe${Mutable}Pointer<T>(base._rawValue), count: capacity)
   }
+
+  /// Executes the given closure while temporarily binding the buffer to
+  /// instances of type `T`.
+  ///
+  /// Use this method when you have a buffer to raw memory and you need
+  /// to access that memory as instances of a given type `T`. Accessing
+  /// memory as a type `T` requires that the memory be bound to that type.
+  /// A memory location may only be bound to one type at a time, so accessing
+  /// the same memory as an unrelated type without first rebinding the memory
+  /// is undefined.
+  ///
+  /// Any instance of `T` within the re-bound region may be initialized or
+  /// uninitialized. If a given instance of `T` within the re-bound region
+  /// overlaps with previously uninitialized memory, it shall be considered
+  /// uninitialized when executing `body`.
+  ///
+  /// After executing `body`, this method rebinds memory back to its original
+  /// binding state. This can be unbound memory, or bound to a different type.
+  ///
+  /// - Note: The buffer's base address must match the
+  ///   alignment of `T` (as reported by `MemoryLayout<T>.alignment`).
+  ///   That is, `Int(bitPattern: self.baseAddress) % MemoryLayout<T>.alignment`
+  ///   must equal zero.
+  ///
+  /// - Parameters:
+  ///   - type: The type to temporarily bind the memory referenced by this
+  ///     pointer. This pointer must be a multiple of this type's alignment.
+  ///   - count: The number of instances of `T` to bind to `type`.
+  ///   - body: A closure that takes a typed pointer to the
+  ///     same memory as this pointer, only bound to type `T`. The closure's
+  ///     pointer argument is valid only for the duration of the closure's
+  ///     execution. If `body` has a return value, that value is also used as
+  ///     the return value for the `withMemoryRebound(to:capacity:_:)` method.
+  ///   - buffer: The buffer temporarily bound to instances of `T`.
+  /// - Returns: The return value, if any, of the `body` closure parameter.
+  @_transparent
+  public func withMemoryRebound<T, Result>(
+    to type: T.Type,
+    _ body: (_ buffer: Unsafe${Mutable}BufferPointer<T>) throws -> Result
+  ) rethrows -> Result {
+    guard let rawBase = _position?._rawValue else {
+      return try body(.init(start: nil, count: 0))
+    }
+
+    let c = count / MemoryLayout<T>.stride
+    Builtin.bindMemory(rawBase, c._builtinWordValue, T.self)
+    defer {
+      #warning("At the moment, this function uses the wrong built-in")
+      Builtin.bindMemory(rawBase, count._builtinWordValue, UInt8.self)
+    }
+    return try body(.init(start: .init(rawBase), count: c))
+  }
 }
 
 extension Unsafe${Mutable}RawBufferPointer: CustomDebugStringConvertible {

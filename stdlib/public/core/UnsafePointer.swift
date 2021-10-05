@@ -301,15 +301,30 @@ public struct UnsafePointer<Pointee>: _Pointer, Sendable {
     return try body(UnsafePointer<T>(_rawValue))
   }
 
-  /// Accesses the pointee at the specified offset from this pointer.
-  ///
+  /// Accesses the pointee at the specified unchecked offset from this pointer.
   ///
   /// For a pointer `p`, the memory at `p + i` must be initialized.
   ///
   /// - Parameter i: The offset from this pointer at which to access an
   ///   instance, measured in strides of the pointer's `Pointee` type.
   @inlinable
+  @available(*, deprecated, renamed: "subscript(unchecked:)")
   public subscript(i: Int) -> Pointee {
+    @_transparent
+    unsafeAddress {
+      return self + i
+    }
+  }
+
+  /// Accesses the pointee at the specified unchecked offset from this pointer.
+  ///
+  /// For a pointer `p`, the memory at `p + i` must be initialized.
+  ///
+  /// - Parameter i: The offset from this pointer at which to access an
+  ///   instance, measured in strides of the pointer's `Pointee` type.
+  @inlinable
+  @_alwaysEmitIntoClient
+  public subscript(unchecked i: Int) -> Pointee {
     @_transparent
     unsafeAddress {
       return self + i
@@ -969,7 +984,7 @@ public struct UnsafeMutablePointer<Pointee>: _Pointer, Sendable {
     return try body(UnsafeMutablePointer<T>(_rawValue))
   }
 
-  /// Accesses the pointee at the specified offset from this pointer.
+  /// Accesses the pointee at the specified unchecked offset from this pointer.
   ///
   /// For a pointer `p`, the memory at `p + i` must be initialized when reading
   /// the value by using the subscript. When the subscript is used as the left
@@ -983,7 +998,34 @@ public struct UnsafeMutablePointer<Pointee>: _Pointer, Sendable {
   /// - Parameter i: The offset from this pointer at which to access an
   ///   instance, measured in strides of the pointer's `Pointee` type.
   @inlinable
+  @available(*, deprecated, renamed: "subscript(unchecked:)")
   public subscript(i: Int) -> Pointee {
+    @_transparent
+    unsafeAddress {
+      return UnsafePointer(self + i)
+    }
+    @_transparent
+    nonmutating unsafeMutableAddress {
+      return self + i
+    }
+  }
+
+  /// Accesses the pointee at the specified unchecked offset from this pointer.
+  ///
+  /// For a pointer `p`, the memory at `p + i` must be initialized when reading
+  /// the value by using the subscript. When the subscript is used as the left
+  /// side of an assignment, the memory at `p + i` must be initialized or
+  /// the pointer's `Pointee` type must be a trivial type.
+  ///
+  /// Do not assign an instance of a nontrivial type through the subscript to
+  /// uninitialized memory. Instead, use an initializing method, such as
+  /// `initialize(repeating:count:)`.
+  ///
+  /// - Parameter i: The offset from this pointer at which to access an
+  ///   instance, measured in strides of the pointer's `Pointee` type.
+  @inlinable
+  @_alwaysEmitIntoClient
+  public subscript(unchecked i: Int) -> Pointee {
     @_transparent
     unsafeAddress {
       return UnsafePointer(self + i)

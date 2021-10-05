@@ -368,6 +368,25 @@ extension UnsafeRawPointer: Strideable {
   }
 }
 
+extension UnsafeRawPointer {
+  /// Returns the next pointer properly aligned to store a value of type `T`
+  ///
+  /// This function returns the next pointer properly aligned to store
+  /// a value of type `T`, if `self` is itself not properly aligned.
+  /// If `self` is properly aligned, this function returns `self`.
+  ///
+  /// - Parameters:
+  ///   - type: the type to be stored at the returned address
+  /// - Returns: a pointer properly aligned to store a value of type `T`
+  @inlinable
+  @_alwaysEmitIntoClient
+  public func advanced<T>(toAlignmentOf type: T.Type) -> Self {
+    let mask = UInt(Builtin.alignof(T.self)) &- 1
+    let bits = (UInt(Builtin.ptrtoint_Word(_rawValue)) &+ mask) & ~mask
+    return .init(Builtin.inttoptr_Word(bits._builtinWordValue))
+  }
+}
+
 /// A raw pointer for accessing and manipulating
 /// untyped data.
 ///
@@ -992,6 +1011,25 @@ extension UnsafeMutableRawPointer: Strideable {
   @_transparent
   public func advanced(by n: Int) -> UnsafeMutableRawPointer {
     return UnsafeMutableRawPointer(Builtin.gepRaw_Word(_rawValue, n._builtinWordValue))
+  }
+}
+
+extension UnsafeMutableRawPointer {
+  /// Returns the next pointer properly aligned to store a value of type `T`
+  ///
+  /// This function returns the next pointer properly aligned to store
+  /// a value of type `T`, if `self` is itself not properly aligned.
+  /// If `self` is properly aligned, this function returns `self`.
+  ///
+  /// - Parameters:
+  ///   - type: the type to be stored at the returned address
+  /// - Returns: a pointer properly aligned to store a value of type `T`
+  @inlinable
+  @_alwaysEmitIntoClient
+  public func advanced<T>(toAlignmentOf type: T.Type) -> Self {
+    let mask = UInt(Builtin.alignof(T.self)) &- 1
+    let bits = (UInt(Builtin.ptrtoint_Word(_rawValue)) &+ mask) & ~mask
+    return .init(Builtin.inttoptr_Word(bits._builtinWordValue))
   }
 }
 

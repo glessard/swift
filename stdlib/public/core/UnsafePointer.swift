@@ -316,6 +316,23 @@ public struct UnsafePointer<Pointee>: _Pointer, Sendable {
     }
   }
 
+  /// Returns a pointer to the stored property referred to by a key path
+  ///
+  /// Obtain a pointer to a stored property. If the key path represents
+  /// a computed property, this subscript will return `nil`.
+  ///
+  /// - Parameter property: A `KeyPath` whose `Root` is `Pointee`
+  /// - Returns: A pointer to the stored property represented
+  ///            by the key path, or `nil`.
+  @inlinable
+  @_alwaysEmitIntoClient
+  public subscript<Property>(
+    property: KeyPath<Pointee, Property>
+  ) -> UnsafePointer<Property>? {
+    guard let o = property._storedInlineOffset else { return nil }
+    return .init(Builtin.gepRaw_Word(_rawValue, o._builtinWordValue))
+  }
+
   @inlinable // unsafe-performance
   internal static var _max: UnsafePointer {
     return UnsafePointer(
@@ -975,6 +992,40 @@ public struct UnsafeMutablePointer<Pointee>: _Pointer, Sendable {
     nonmutating unsafeMutableAddress {
       return self + i
     }
+  }
+
+  /// Returns a pointer to the stored property referred to by a key path
+  ///
+  /// Obtain a pointer to a stored property. If the key path represents
+  /// a computed property, this subscript will return `nil`.
+  ///
+  /// - Parameter property: A `KeyPath` whose `Root` is `Pointee`
+  /// - Returns: A pointer to the stored property represented
+  ///            by the key path, or `nil`.
+  @inlinable
+  @_alwaysEmitIntoClient
+  public subscript<Property>(
+    property: KeyPath<Pointee, Property>
+  ) -> UnsafePointer<Property>? {
+    guard let o = property._storedInlineOffset else { return nil }
+    return .init(Builtin.gepRaw_Word(_rawValue, o._builtinWordValue))
+  }
+
+  /// Returns a mutable pointer to the stored property referred to by a key path
+  ///
+  /// Obtain a mutable pointer to a stored property. If the key path represents
+  /// a computed property, this subscript will return `nil`.
+  ///
+  /// - Parameter property: A `WritableKeyPath` whose `Root` is `Pointee`
+  /// - Returns: A mutable pointer to the stored property represented
+  ///            by the key path, or `nil`.
+  @inlinable
+  @_alwaysEmitIntoClient
+  public subscript<Property>(
+    property: WritableKeyPath<Pointee, Property>
+  ) -> UnsafeMutablePointer<Property>? {
+    guard let o = property._storedInlineOffset else { return nil }
+    return .init(Builtin.gepRaw_Word(_rawValue, o._builtinWordValue))
   }
 
   @inlinable // unsafe-performance

@@ -372,7 +372,7 @@ extension UnsafeRawPointer {
   /// Returns the next pointer properly aligned to store a value of type `T`
   ///
   /// This function returns the next pointer properly aligned to store
-  /// a value of type `T`, if `self` is itself not properly aligned.
+  /// a value of type `T`, if `self` is not itself properly aligned.
   /// If `self` is properly aligned, this function returns `self`.
   ///
   /// - Parameters:
@@ -380,10 +380,25 @@ extension UnsafeRawPointer {
   /// - Returns: a pointer properly aligned to store a value of type `T`
   @inlinable
   @_alwaysEmitIntoClient
-  public func advanced<T>(toAlignmentOf type: T.Type) -> Self {
+  public func roundedUp<T>(toAlignmentOf type: T.Type) -> Self {
     let mask = UInt(Builtin.alignof(T.self)) &- 1
     let bits = (UInt(Builtin.ptrtoint_Word(_rawValue)) &+ mask) & ~mask
     return .init(Builtin.inttoptr_Word(bits._builtinWordValue))
+  }
+
+  /// Returns the preceding pointer properly aligned to store a value of type `T`
+  ///
+  /// This function returns the preceding pointer properly aligned to store
+  /// a value of type `T`, if `self` is not itself properly aligned.
+  /// If `self` is properly aligned, this function returns `self`.
+  ///
+  /// - Parameters:
+  ///   - type: the type to be stored at the returned address
+  /// - Returns: a pointer properly aligned to store a value of type `T`
+  public func roundedDown<T>(toAlignmentOf type: T.Type) -> Self {
+    let mask = UInt(Builtin.alignof(T.self)) &- 1
+    let bits = UInt(Builtin.ptrtoint_Word(_rawValue)) & ~mask
+    return .init(Builtin.inttoptr_Word(Bits._BuiltinWordValue))
   }
 }
 
@@ -1018,7 +1033,7 @@ extension UnsafeMutableRawPointer {
   /// Returns the next pointer properly aligned to store a value of type `T`
   ///
   /// This function returns the next pointer properly aligned to store
-  /// a value of type `T`, if `self` is itself not properly aligned.
+  /// a value of type `T`, if `self` is not itself properly aligned.
   /// If `self` is properly aligned, this function returns `self`.
   ///
   /// - Parameters:
@@ -1026,10 +1041,25 @@ extension UnsafeMutableRawPointer {
   /// - Returns: a pointer properly aligned to store a value of type `T`
   @inlinable
   @_alwaysEmitIntoClient
-  public func advanced<T>(toAlignmentOf type: T.Type) -> Self {
+  public func roundedUp<T>(toAlignmentOf type: T.Type) -> Self {
     let mask = UInt(Builtin.alignof(T.self)) &- 1
     let bits = (UInt(Builtin.ptrtoint_Word(_rawValue)) &+ mask) & ~mask
     return .init(Builtin.inttoptr_Word(bits._builtinWordValue))
+  }
+
+  /// Returns the preceding pointer properly aligned to store a value of type `T`
+  ///
+  /// This function returns the preceding pointer properly aligned to store
+  /// a value of type `T`, if `self` is not itself properly aligned.
+  /// If `self` is properly aligned, this function returns `self`.
+  ///
+  /// - Parameters:
+  ///   - type: the type to be stored at the returned address
+  /// - Returns: a pointer properly aligned to store a value of type `T`
+  public func roundedDown<T>(toAlignmentOf type: T.Type) -> Self {
+    let mask = UInt(Builtin.alignof(T.self)) &- 1
+    let bits = UInt(Builtin.ptrtoint_Word(_rawValue)) & ~mask
+    return .init(Builtin.inttoptr_Word(Bits._BuiltinWordValue))
   }
 }
 

@@ -1600,7 +1600,9 @@ extension BinaryInteger {
         }
       }
     }
-    _preconditionFailure("Distance is not representable in Int")
+    _preconditionFailure(
+      "Distance cannot be represented as a value of type Int"
+    )
   }
 
   /// Returns a value that is offset the specified distance from this value.

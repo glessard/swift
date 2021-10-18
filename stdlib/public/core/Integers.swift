@@ -1589,8 +1589,8 @@ extension BinaryInteger {
         }
       }
     } else {
-      let isNegative = self < (0 as Self)
-      if isNegative == (other < (0 as Self)) {
+      let isNegative = (self != Self(exactly: self.magnitude))
+      if isNegative == (other != Self(exactly: other.magnitude)) {
         if let result = Int(exactly: other - self) {
           return result
         }

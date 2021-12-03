@@ -401,18 +401,55 @@ extension String {
   }
 }
 
+@usableFromInline
+enum UTF8Repair: Error { case repaired(String) }
+
+@usableFromInline
+internal func validateUTF8OrRepair(
+  _ input: UnsafeBufferPointer<UInt8>
+) throws {
+  if case .error(let initialRange) = validateUTF8(input) {
+    let repaired = repairUTF8(input, firstKnownBrokenRange: initialRange)
+    throw UTF8Repair.repaired(repaired)
+  }
+}
+
 extension String {
   // This force type-casts element to UInt8, since we cannot currently
   // communicate to the type checker that we proved this with our dynamic
   // check in String(decoding:as:).
   @_alwaysEmitIntoClient
   @inline(never) // slow-path
-  private static func _fromNonContiguousUnsafeBitcastUTF8Repairing<
-    C: Collection
-  >(_ input: C) -> (result: String, repairsMade: Bool) {
+  private static func _fromNonContiguousUnsafeBitcastUTF8Repairing<C>(
+    _ input: C
+  ) -> (result: String, repairsMade: Bool) where C: Collection {
     _internalInvariant(C.Element.self == UInt8.self)
-    return Array(input).withUnsafeBufferPointer {
-      $0.withMemoryRebound(to: UInt8.self, { String._fromUTF8Repairing($0) })
+    if #available(macOS 10.16, iOS 14.0, watchOS 7.0, tvOS 14.0, *) {
+      do {
+        let wellFormed = try String(unsafeUninitializedCapacity: input.count) {
+          buffer in
+          var (iterator, c) = buffer.withMemoryRebound(to: C.Element.self) {
+            $0.initialize(from: input)
+          }
+          _precondition(
+            iterator.next() == nil,
+            "Collection contains more than 'count' UTF8 code units"
+          )
+          try validateUTF8OrRepair(.init(buffer))
+          return c
+        }
+        return (wellFormed, false)
+      }
+      catch UTF8Repair.repaired(let repaired) {
+        return (repaired, true)
+      }
+      catch { // unreachable
+        fatalError()
+      }
+    } else {
+      return Array(input).withUnsafeBufferPointer {
+        $0.withMemoryRebound(to: UInt8.self, { String._fromUTF8Repairing($0) })
+      }
     }
   }
 

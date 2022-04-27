@@ -109,7 +109,12 @@ extension String {
   @_alwaysEmitIntoClient
   @available(*, deprecated, message: "Use a copy of the String argument")
   public init(cString nullTerminatedUTF8: String) {
-    self = nullTerminatedUTF8.withCString(String.init(cString:))
+    var string = nullTerminatedUTF8
+    string.makeContiguousUTF8()
+    if let null = decoded.firstIndex(of: "\0") {
+      string = String(string[..<null])
+    }
+    self = string
   }
 
   @inlinable
@@ -180,7 +185,12 @@ extension String {
   @_alwaysEmitIntoClient
   @available(*, deprecated, message: "Use a copy of the String argument")
   public init?(validatingUTF8 cString: String) {
-    self = cString.withCString(String.init(cString:))
+    var string = cString
+    string.makeContiguousUTF8()
+    if let null = decoded.firstIndex(of: "\0") {
+      string = String(string[..<null])
+    }
+    self = string
   }
 
   @inlinable
@@ -307,8 +317,6 @@ extension String {
     }
   }
 
-  @_specialize(where Encoding == Unicode.UTF8)
-  @_specialize(where Encoding == Unicode.UTF16)
   @inlinable
   @_alwaysEmitIntoClient
   @available(*, deprecated, message: "Use a copy of the String argument")
@@ -317,11 +325,12 @@ extension String {
     as encoding: Encoding.Type,
     repairingInvalidCodeUnits isRepairing: Bool = true
   ) -> (result: String, repairsMade: Bool)? {
-    return cString.withCString(encodedAs: encoding) {
-      String.decodeCString(
-        $0, as: encoding, repairingInvalidCodeUnits: isRepairing
-      )
+    var string = cString
+    string.makeContiguousUTF8()
+    if let null = decoded.firstIndex(of: "\0") {
+      string = String(string[..<null])
     }
+    return (string, false)
   }
 
   @_specialize(where Encoding == Unicode.UTF8)
@@ -372,8 +381,6 @@ extension String {
     self = String.decodeCString(nullTerminatedCodeUnits, as: sourceEncoding)!.0
   }
 
-  @_specialize(where Encoding == Unicode.UTF8)
-  @_specialize(where Encoding == Unicode.UTF16)
   @inlinable
   @_alwaysEmitIntoClient
   @available(*, deprecated, message: "Use a copy of the String argument")
@@ -381,9 +388,12 @@ extension String {
     decodingCString nullTerminatedCodeUnits: String,
     as sourceEncoding: Encoding.Type
   ) {
-    self = nullTerminatedCodeUnits.withCString(encodedAs: sourceEncoding) {
-      String(decodingCString: $0, as: sourceEncoding.self)
+    var string = nullTerminatedCodeUnits
+    string.makeContiguousUTF8()
+    if let null = decoded.firstIndex(of: "\0") {
+      string = String(string[..<null])
     }
+    self = string
   }
 
   @_specialize(where Encoding == Unicode.UTF8)

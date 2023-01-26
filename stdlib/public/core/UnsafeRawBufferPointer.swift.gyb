@@ -318,36 +318,14 @@ extension Unsafe${Mutable}RawBufferPointer: ${Mutable}Collection {
   }
 }
 
+import SwiftShims
+
 extension Unsafe${Mutable}RawBufferPointer {
   public func _customIndexOfEquatableElement(_ element: UInt8) -> Index?? {
-    guard let ptr = baseAddress else { return Optional(nil) }
-
-    var i = startIndex
-
-    let stride = MemoryLayout<UInt>.stride
-
-    let aligned = ptr.alignedUp(for: UInt.self)
-    while ptr.advanced(by: i) < aligned && i < endIndex {
-      guard self[i] != element else { return Optional(i) }
-      i &+= 1
+    if let ptr = baseAddress,
+       let found = _swift_stdlib_memchr(ptr, Int32(element), count) {
+      return startIndex &+ ptr.distance(to: found)
     }
-
-    var mask = UInt(0)
-    withUnsafeMutableBytes(of: &mask) {
-      _ = $0.initializeMemory(as: UInt8.self, repeating: element)
-    }
-
-    while (i &+ stride) <= endIndex {
-      let word = ptr.load(fromByteOffset: i, as: UInt.self)
-      guard word ^ mask == 0 else { break }
-      i &+= stride
-    }
-
-    while i < endIndex {
-      guard self[i] != element else { return Optional(i) }
-      i &+= 1
-    }
-
     return Optional(nil)
   }
 

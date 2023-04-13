@@ -64,6 +64,11 @@ extension _Pointer {
   @_transparent
   public init?(bitPattern: Int) {
     if bitPattern == 0 { return nil }
+    self.init(_uncheckedBitPattern: bitPattern)
+  }
+
+  @_transparent
+  public init(_uncheckedBitPattern bitPattern: Int) {
     self.init(Builtin.inttoptr_Word(bitPattern._builtinWordValue))
   }
 
@@ -79,6 +84,11 @@ extension _Pointer {
   @_transparent
   public init?(bitPattern: UInt) {
     if bitPattern == 0 { return nil }
+    self.init(_uncheckedBitPattern: bitPattern)
+  }
+
+  @_transparent
+  public init(_uncheckedBitPattern bitPattern: UInt) {
     self.init(Builtin.inttoptr_Word(bitPattern._builtinWordValue))
   }
 

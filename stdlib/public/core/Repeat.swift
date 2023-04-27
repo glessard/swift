@@ -83,6 +83,29 @@ extension Repeated: RandomAccessCollection {
   }
 }
 
+extension Repeated {
+  public func _copyContents(
+    initializing destination: UnsafeMutableBufferPointer<Element>
+  ) -> (Iterator, UnsafeMutableBufferPointer<Element>.Index) {
+    guard let baseAddress = destination.baseAddress else {
+      return (makeIterator(), 0)
+    }
+    let count = Swift.min(self.count, destination.count)
+    if MemoryLayout<Element>.stride == 1 && _isPOD(Element.self) {
+      _ = baseAddress.withMemoryRebound(to: UInt8.self, capacity: count) {
+        memset($0, Int32(unsafeBitCast(repeatedValue, to: UInt8.self)), count)
+      }
+    }
+    else {
+      baseAddress.initialize(repeating: repeatedValue, count: count)
+    }
+    let remaining = repeatElement(
+      repeatedValue, count: destination.count &- count
+    )
+    return (remaining.makeIterator(), count)
+  }
+}
+
 /// Creates a collection containing the specified number of the given element.
 ///
 /// The following example creates a `Repeated<Int>` collection containing five

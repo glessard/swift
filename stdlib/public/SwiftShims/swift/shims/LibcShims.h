@@ -69,6 +69,19 @@ static inline int _swift_stdlib_memcmp(const void *s1, const void *s2,
   return memcmp(s1, s2, n);
 }
 
+SWIFT_READONLY
+static inline void * _Nullable _swift_stdlib_memset(const void *s, int c,
+                                                    __swift_size_t n) {
+  // FIXME: Is there a way to identify Glibc specifically?
+#if defined(__gnu_linux__)
+  extern int memset(const void * _Nonnull, const void * _Nonnull, __swift_size_t);
+#else
+  extern int memset(const void * _Null_unspecified, const void * _Null_unspecified, __swift_size_t);
+#endif
+  extern void * _Nullable memset(const void * _Nonnull, int, __swift_size_t);
+  return memset(s, c, n);
+}
+
 // Casting helper. This code needs to work when included from C or C++.
 // Casting away const with a C-style cast warns in C++. Use a const_cast
 // there.

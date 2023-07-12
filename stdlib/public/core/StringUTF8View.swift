@@ -575,9 +575,29 @@ extension String.Index {
 }
 
 extension String.UTF8View {
+  /// Executes a closure on the `UTF8View`'s contiguous storage.
+  ///
+  /// This method calls `body(buffer)`, where `buffer` is a pointer to the
+  /// contiguous storage. If the `UTF8View` does not currently have a
+  /// contiguous internal representation, it immediately returns `nil`.
+  ///
+  /// The optimizer can often eliminate bounds- and uniqueness-checking
+  /// within an algorithm. When that fails, however, invoking the same
+  /// algorithm on the `buffer` argument may let you trade safety for speed.
+  ///
+  /// Successive calls to this method may provide a different pointer on each
+  /// call. Don't store `buffer` outside of this method.
+  ///
+  /// - Parameters:
+  ///   - body: A closure that receives an `UnsafeBufferPointer` to the
+  ///     sequence's contiguous storage.
+  ///   - buffer: An `UnsafeBufferPointer` to the view's contiguous storage.
+  /// - Returns: The value returned from `body`, unless the sequence doesn't
+  ///   support contiguous storage, in which case the method ignores `body` and
+  ///   returns `nil`.
   @inlinable
   public func withContiguousStorageIfAvailable<R>(
-    _ body: (UnsafeBufferPointer<Element>) throws -> R
+    _ body: (_ buffer: UnsafeBufferPointer<Element>) throws -> R
   ) rethrows -> R? {
     guard _guts.isFastUTF8 else { return nil }
     return try _guts.withFastUTF8(body)

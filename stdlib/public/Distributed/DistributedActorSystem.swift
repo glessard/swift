@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2020-2021 Apple Inc. and the Swift project authors
+// Copyright (c) 2020 - 2024 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -636,7 +636,8 @@ public struct RemoteCallTarget: CustomStringConvertible, Hashable {
 @_silgen_name("swift_distributed_execute_target")
 func _executeDistributedTarget<D: DistributedTargetInvocationDecoder>(
   on actor: AnyObject, // : DistributedActor
-  _ targetName: UnsafePointer<UInt8>, _ targetNameLength: UInt,
+  @_forwardedToC _ targetName: UnsafePointer<Int8>,
+  _ targetNameLength: UInt,
   argumentDecoder: inout D,
   argumentTypes: Builtin.RawPointer,
   resultBuffer: Builtin.RawPointer,

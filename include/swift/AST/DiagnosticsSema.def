@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2018 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2024 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -4026,9 +4026,9 @@ ERROR(optional_compilerinitialized,none,
 ERROR(instancemember_compilerinitialized,none,
       "'@_compilerInitialized' can only be applied to a non-static class or actor member", ())
 
-// @_nonEphemeral attribute
-ERROR(non_ephemeral_non_pointer_type,none,
-      "@_nonEphemeral attribute only applies to pointer types", ())
+// @_nonEphemeral and @forwardedToC attribute
+ERROR(attr_non_pointer_type,none,
+      "@%0 attribute only applies to pointer types", (StringRef))
 
 // NSManaged attribute
 ERROR(attr_NSManaged_not_instance_member,none,

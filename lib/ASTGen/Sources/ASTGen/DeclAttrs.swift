@@ -205,6 +205,7 @@ extension ASTGenVisitor {
         .dynamicMemberLookup,
         .emitAssemblyVisionRemarks,
         .fixedLayout,
+        .forwardedToC,
         .frozen,
         .gkInspectable,
         .globalActor,

@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2020 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2024 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -7049,14 +7049,14 @@ detail::function_deserializer::deserialize(ModuleFile &MF,
     IdentifierID labelID;
     IdentifierID internalLabelID;
     TypeID typeID;
-    bool isVariadic, isAutoClosure, isNonEphemeral, isIsolated,
-        isCompileTimeConst;
+    bool isVariadic, isAutoClosure, isNonEphemeral, isIsolated;
+    bool isCompileTimeConst, isForwardedToC;
     bool isNoDerivative, isSending;
     unsigned rawOwnership;
     decls_block::FunctionParamLayout::readRecord(
         scratch, labelID, internalLabelID, typeID, isVariadic, isAutoClosure,
         isNonEphemeral, rawOwnership, isIsolated, isNoDerivative,
-        isCompileTimeConst, isSending);
+        isCompileTimeConst, isSending, isForwardedToC);
 
     auto ownership = getActualParamDeclSpecifier(
       (serialization::ParamDeclSpecifier)rawOwnership);
@@ -7071,7 +7071,8 @@ detail::function_deserializer::deserialize(ModuleFile &MF,
                         ParameterTypeFlags(isVariadic, isAutoClosure,
                                            isNonEphemeral, *ownership,
                                            isIsolated, isNoDerivative,
-                                           isCompileTimeConst, isSending),
+                                           isCompileTimeConst, isSending,
+                                           isForwardedToC),
                         MF.getIdentifier(internalLabelID));
   }
 

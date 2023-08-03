@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2017 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2024 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -412,8 +412,18 @@ public func spawnChild(_ args: [String])
     }
   }
   let spawnResult = withArrayOfCStrings(childArgs) {
-    _stdlib_posix_spawn(
-      &pid, childArgs[0], &fileActions, nil, $0, environ)
+    $0.withUnsafeBufferPointer { arrayBuffer in
+      childArgs[0].withCString {
+        _stdlib_posix_spawn(
+          &pid,
+          $0,
+          &fileActions,
+          nil,
+          arrayBuffer.baseAddress!,
+          environ
+        )
+      }
+    }
   }
   if spawnResult != 0 {
     print(String(cString: strerror(spawnResult)))

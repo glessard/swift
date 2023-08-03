@@ -506,7 +506,12 @@ SIMPLE_DECL_ATTR(unsafe, Unsafe,
   ABIStableToAdd | ABIStableToRemove | APIBreakingToAdd | APIStableToRemove,
   160)
 
-LAST_DECL_ATTR(Unsafe)
+SIMPLE_DECL_ATTR(_forwardedToC, ForwardedToC,
+  OnParam |
+  ABIStableToAdd | ABIStableToRemove | APIStableToAdd | APIBreakingToRemove,
+  161)
+
+LAST_DECL_ATTR(ForwardedToC)
 
 #undef DECL_ATTR_ALIAS
 #undef CONTEXTUAL_DECL_ATTR_ALIAS

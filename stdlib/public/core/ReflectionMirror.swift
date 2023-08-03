@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2020 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2024 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -295,7 +295,11 @@ public func _forEachField(
         return false
       }
     } else {
-      if !body("", offset, childType, kind) {
+      let result = withUnsafePointer(to: CChar.zero) {
+        !body($0, offset, childType, kind)
+      }
+
+      if result {
         return false
       }
     }
@@ -379,7 +383,11 @@ public func _forEachFieldWithKeyPath<Root>(
         return false
       }
     } else {
-      if !body("", partialKeyPath) {
+      let result = withUnsafePointer(to: CChar.zero) {
+        !body($0, partialKeyPath)
+      }
+
+      if result {
         return false
       }
     }

@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2020 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2024 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -7108,6 +7108,10 @@ public:
 
   /// Attempt to apply an implicit `@_nonEphemeral` attribute to this parameter.
   void setNonEphemeralIfPossible();
+
+  /// Does this parameter allow the implicit conversion from native Swift types
+  /// like Array or String to any of the UnsafePointer types?
+  bool isForwardedToC() const;
 
   /// Remove the type of this varargs element designator, without the array
   /// type wrapping it.  A parameter like "Int..." will have formal parameter

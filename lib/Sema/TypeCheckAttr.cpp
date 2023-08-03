@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2017 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2024 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -366,6 +366,8 @@ public:
   void visitWeakLinkedAttr(WeakLinkedAttr *attr);
   void visitSILGenNameAttr(SILGenNameAttr *attr);
   void visitUnsafeAttr(UnsafeAttr *attr);
+
+  void visitForwardedToCAttr(ForwardedToCAttr *attr);
 };
 
 } // end anonymous namespace
@@ -4583,7 +4585,7 @@ void AttributeChecker::visitNonEphemeralAttr(NonEphemeralAttr *attr) {
     return;
   }
 
-  diagnose(attr->getLocation(), diag::non_ephemeral_non_pointer_type);
+  diagnose(attr->getLocation(), diag::attr_non_pointer_type, attr->getAttrName());
   attr->setInvalid();
 }
 
@@ -7653,6 +7655,25 @@ void AttributeChecker::visitUnsafeAttr(UnsafeAttr *attr) {
     return;
 
   diagnoseAndRemoveAttr(attr, diag::unsafe_attr_disabled);
+}
+
+void AttributeChecker::visitForwardedToCAttr(ForwardedToCAttr *attr) {
+  auto *param = cast<ParamDecl>(D);
+  auto type = param->getInterfaceType()->lookThroughSingleOptionalType();
+
+  // Can only be applied to Unsafe[...]Pointer types
+  if (type->getAnyPointerElementType())
+    return;
+
+  // ... or the protocol Self type.
+  auto *outerDC = param->getDeclContext()->getParent();
+  if (outerDC->getSelfProtocolDecl() &&
+      type->isEqual(outerDC->getProtocolSelfType())) {
+    return;
+  }
+
+  diagnose(attr->getLocation(), diag::attr_non_pointer_type, attr->getAttrName());
+  attr->setInvalid();
 }
 
 namespace {

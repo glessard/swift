@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2018 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2024 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -2650,6 +2650,11 @@ static ParamDecl *getParameterInfo(ClangImporter::Implementation *impl,
   paramInfo->setSpecifier(isInOut ? ParamSpecifier::InOut
                                   : ParamSpecifier::Default);
   paramInfo->setInterfaceType(swiftParamTy);
+
+  if (swiftParamTy->getAnyPointerElementType()) {
+    paramInfo->getAttrs().add(new (paramInfo->getASTContext()) ForwardedToCAttr(/*isImplicit*/ true));
+  }
+
   impl->recordImplicitUnwrapForDecl(paramInfo, isParamTypeImplicitlyUnwrapped);
 
   // Import the default expression for this parameter if possible.

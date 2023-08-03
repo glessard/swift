@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2018 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2024 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -7931,9 +7931,19 @@ ConstraintSystem::matchTypes(Type type1, Type type2, ConstraintKind kind,
             if (pointerKind == PTK_UnsafePointer
                 || pointerKind == PTK_UnsafeRawPointer) {
               if (!isAutoClosureArgument) {
+                bool isForwardedToC = true;
+
+                if (auto arg2Param = locator.last()
+                                  ->getAs<LocatorPathElt::ApplyArgToParam>()) {
+                  isForwardedToC = arg2Param->getParameterFlags()
+                                             .isForwardedToC();
+                }
+
                 if (type1->isArrayType()) {
-                  conversionsOrFixes.push_back(
+                  if (isForwardedToC) {
+                    conversionsOrFixes.push_back(
                       ConversionRestrictionKind::ArrayToPointer);
+                  }
 
                   // If regular array-to-pointer conversion doesn't work,
                   // let's try C pointer conversion that has special semantics
@@ -7947,7 +7957,7 @@ ConstraintSystem::matchTypes(Type type1, Type type2, ConstraintKind kind,
                 // The pointer can be converted from a string, if the element
                 // type is compatible.
                 auto &ctx = getASTContext();
-                if (type1->isString()) {
+                if (type1->isString() && isForwardedToC) {
                   auto baseTy = getFixedTypeRecursive(pointeeTy, false);
 
                   if (baseTy->isTypeVariableOrMember() ||

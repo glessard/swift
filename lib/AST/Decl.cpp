@@ -7976,6 +7976,10 @@ void ParamDecl::setNonEphemeralIfPossible() {
   }
 }
 
+bool ParamDecl::isForwardedToC() const {
+  return getAttrs().hasAttribute<ForwardedToCAttr>();
+}
+
 Type ParamDecl::getVarargBaseTy(Type VarArgT) {
   TypeBase *T = VarArgT.getPointer();
   if (auto *AT = dyn_cast<VariadicSequenceType>(T))
@@ -8006,7 +8010,7 @@ AnyFunctionType::Param ParamDecl::toFunctionParam(Type type) const {
   auto flags = ParameterTypeFlags::fromParameterType(
       type, isVariadic(), isAutoClosure(), isNonEphemeral(),
       getSpecifier(), isIsolated(), /*isNoDerivative*/ false,
-      isCompileTimeConst());
+      isCompileTimeConst(), isForwardedToC());
   return AnyFunctionType::Param(type, label, flags, internalLabel);
 }
 

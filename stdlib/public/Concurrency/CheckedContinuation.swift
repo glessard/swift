@@ -78,9 +78,8 @@ internal final class CheckedContinuationCanary: @unchecked Sendable {
     // Log if the continuation was never consumed before the instance was
     // destructed.
     if _continuationPtr.pointee != nil {
-      "SWIFT TASK CONTINUATION MISUSE: \(function) leaked its continuation!\n".withCString {
-        logFailedCheck(UnsafeRawPointer($0))
-      }
+      "SWIFT TASK CONTINUATION MISUSE: \(function) leaked its continuation!\n"
+        .withCString { logFailedCheck($0) }
     }
   }
 }

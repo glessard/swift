@@ -289,7 +289,7 @@ public func _forEachField(
         return false
       }
     } else {
-      let result = "".withCString {
+      let result = withUnsafePointer(to: CChar.zero) {
         !body($0, offset, childType, kind)
       }
 
@@ -377,7 +377,7 @@ public func _forEachFieldWithKeyPath<Root>(
         return false
       }
     } else {
-      let result = "".withCString {
+      let result = withUnsafePointer(to: CChar.zero) {
         !body($0, partialKeyPath)
       }
 

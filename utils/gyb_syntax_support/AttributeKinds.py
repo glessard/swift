@@ -748,9 +748,9 @@ DECL_ATTR_KINDS = [
                   APIStableToAdd, APIStableToRemove,
                   code=146),
 
-    SimpleDeclAttribute('forwardedToC', 'ForwardedToC',
+    SimpleDeclAttribute('_forwardedToC', 'ForwardedToC',
                         OnParam,
-                        ABIStableToAdd, ABIStableToRemove, APIBreakingToAdd, APIStableToRemove,
+                        ABIStableToAdd, ABIStableToRemove, APIStableToAdd, APIBreakingToRemove,
                         code=147),
 ]
 

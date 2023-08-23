@@ -7843,6 +7843,14 @@ ConstraintSystem::matchTypes(Type type1, Type type2, ConstraintKind kind,
         type2IsOptional = true;
         unwrappedType2 = unwrapped;
       }
+      bool isForwardedToC = false;
+      if (auto arg2Param = locator.last()
+                        ->getAs<LocatorPathElt::ApplyArgToParam>()) {
+//        if (ar2Param->getInnermostMethodContext()->hasClangNode()) {
+//          isForwardedToC = true
+//        } else ...
+        isForwardedToC = arg2Param->getParameterFlags().isForwardedToC();
+      }
       PointerTypeKind pointerKind;
       if (Type pointeeTy =
               unwrappedType2->getAnyPointerElementType(pointerKind)) {
@@ -7871,7 +7879,8 @@ ConstraintSystem::matchTypes(Type type1, Type type2, ConstraintKind kind,
               // Only try an inout-to-pointer conversion if we know it's not
               // an array being converted to a raw pointer type. Such
               // conversions can only use array-to-pointer.
-              if (!baseIsArray || !isRawPointerKind(pointerKind)) {
+              if (isForwardedToC &&
+                  (!baseIsArray || !isRawPointerKind(pointerKind))) {
                 conversionsOrFixes.push_back(
                     ConversionRestrictionKind::InoutToPointer);
 
@@ -7931,13 +7940,6 @@ ConstraintSystem::matchTypes(Type type1, Type type2, ConstraintKind kind,
             if (pointerKind == PTK_UnsafePointer
                 || pointerKind == PTK_UnsafeRawPointer) {
               if (!isAutoClosureArgument) {
-                bool isForwardedToC = true;
-
-                if (auto arg2Param = locator.last()
-                                  ->getAs<LocatorPathElt::ApplyArgToParam>()) {
-                  isForwardedToC = arg2Param->getParameterFlags()
-                                             .isForwardedToC();
-                }
 
                 if (type1->isArrayType()) {
                   if (isForwardedToC) {
@@ -8018,8 +8020,10 @@ ConstraintSystem::matchTypes(Type type1, Type type2, ConstraintKind kind,
           // PTK_AutoreleasingUnsafeMutablePointer can be converted from an
           // inout reference to a scalar.
           if (!isAutoClosureArgument && type1->is<InOutType>()) {
-            conversionsOrFixes.push_back(
-                                     ConversionRestrictionKind::InoutToPointer);
+            if (!isForwardedToC) {
+              conversionsOrFixes.push_back(
+                  ConversionRestrictionKind::InoutToPointer);
+            }
           }
           break;
         }

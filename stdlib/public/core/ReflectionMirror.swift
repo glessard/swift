@@ -52,8 +52,8 @@ internal func _getChild<T>(
   of: T,
   type: Any.Type,
   index: Int,
-  outName: UnsafeMutablePointer<UnsafePointer<CChar>?>,
-  outFreeFunc: UnsafeMutablePointer<NameFreeFunc?>
+  @_forwardedToC outName: UnsafeMutablePointer<UnsafePointer<CChar>?>,
+  @_forwardedToC outFreeFunc: UnsafeMutablePointer<NameFreeFunc?>
 ) -> Any
 
 // Returns 'c' (class), 'e' (enum), 's' (struct), 't' (tuple), or '\0' (none)
@@ -280,7 +280,9 @@ public func _forEachField(
     let offset = _getChildOffset(type, index: i)
 
     var field = _FieldReflectionMetadata()
-    let childType = _getChildMetadata(type, index: i, fieldMetadata: &field)
+    let childType = withUnsafeMutablePointer(to: &field) {
+      _getChildMetadata(type, index: i, fieldMetadata: $0)
+    }
     defer { field.freeFunc?(field.name) }
     let kind = _MetadataKind(childType)
 
@@ -334,7 +336,9 @@ public func _forEachFieldWithKeyPath<Root>(
     let offset = _getChildOffset(type, index: i)
 
     var field = _FieldReflectionMetadata()
-    let childType = _getChildMetadata(type, index: i, fieldMetadata: &field)
+    let childType = withUnsafeMutablePointer(to: &field) {
+      _getChildMetadata(type, index: i, fieldMetadata: $0)
+    }
     defer { field.freeFunc?(field.name) }
     let kind = _MetadataKind(childType)
     let supportedType: Bool

@@ -2764,7 +2764,13 @@ internal func _resolveKeyPathGenericArgReference(
     // Unaligned load of the offset.
     let pointerReference = reference + 1
     var offset: Int32 = 0
-    _memcpy(dest: &offset, src: pointerReference, size: 4)
+    withUnsafeMutablePointer(to: &offset) {
+      _memcpy(
+        dest: $0,
+        src: pointerReference,
+        size: numericCast(MemoryLayout<Int32>.size)
+      )
+    }
 
     let accessorPtrRaw = _resolveCompactFunctionPointer(pointerReference, offset)
     let accessorPtrSigned =
@@ -4083,11 +4089,13 @@ extension AnyKeyPath: CustomDebugStringConvertible {
             })
           if let index = index {
             var field = _FieldReflectionMetadata()
-            _ = _getChildMetadata(
-              valueType,
-              index: index,
-              fieldMetadata: &field
-            )
+            _ = withUnsafeMutablePointer(to: &field) {
+              _getChildMetadata(
+                valueType,
+                index: index,
+                fieldMetadata: $0
+              )
+            }
             defer {
               field.freeFunc?(field.name)
             }

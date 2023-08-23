@@ -49,7 +49,13 @@ internal func getSectionInfo(_ name: String,
   _ imageHeader: UnsafePointer<MachHeader>) -> Section? {
   debugLog("BEGIN \(#function)"); defer { debugLog("END \(#function)") }
   var size: UInt = 0
-  let address = getsectiondata(imageHeader, "__TEXT", name, &size)
+  let address = withUnsafeMutablePointer(to: &size) { size in
+    name.withCString { name in
+      "__TEXT".withCString { text in
+        getsectiondata(imageHeader, text, name, size)
+      }
+    }
+  }
   guard let nonNullAddress = address else { return nil }
   guard size != 0 else { return nil }
   return Section(startAddress: nonNullAddress, size: size)
@@ -66,7 +72,11 @@ internal func getAddressInfoForImage(atIndex i: UInt32) ->
           to: UnsafePointer<MachHeader>.self)
   let name = String(validatingUTF8: _dyld_get_image_name(i)!)!
   var size: UInt = 0
-  let address = getsegmentdata(header, "__TEXT", &size)
+  let address = withUnsafeMutablePointer(to: &size) { size in
+    "__TEXT".withCString { text in
+      getsegmentdata(header, text, size)
+    }
+  }
   return (name, address, size)
 }
 

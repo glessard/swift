@@ -294,7 +294,7 @@ public func ioctl(
 public func ioctl(
   _ fd: CInt,
   _ request: UInt,
-  _ ptr: UnsafeMutableRawPointer
+  @_forwardedToC _ ptr: UnsafeMutableRawPointer
 ) -> CInt {
   return _swift_stdlib_ioctlPtr(fd, request, ptr)
 }

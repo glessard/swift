@@ -107,8 +107,9 @@ public func _stdlib_thread_create_block<Argument, Result>(
   return (0, nil)
 #else
   var threadID = _make_pthread_t()
-  let result = pthread_create(&threadID, nil,
-    { invokeBlockContext($0) }, contextAsVoidPointer)
+  let result = withUnsafeMutablePointer(to: &threadID) {
+    pthread_create($0, nil, { invokeBlockContext($0) }, contextAsVoidPointer)
+  }
   if result == 0 {
     return (result, threadID)
   } else {
@@ -140,8 +141,10 @@ public func _stdlib_thread_join<Result>(
    // WASI environment has a only single thread
    return (0, nil)
 #else
-  var threadResultRawPtr: UnsafeMutableRawPointer?
-  let result = pthread_join(thread, &threadResultRawPtr)
+  var threadResultRawPtr: UnsafeMutableRawPointer? = nil
+  let result = withUnsafeMutablePointer(to: &threadResultRawPtr) {
+    pthread_join(thread, $0)
+  }
   if result == 0 {
     let threadResultPtr = threadResultRawPtr!.assumingMemoryBound(
       to: Result.self)

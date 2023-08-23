@@ -138,8 +138,11 @@ func _stdlib_atomicInitializeARCRef(
   let desiredPtr = unmanaged.toOpaque()
   let rawTarget = UnsafeMutableRawPointer(target).assumingMemoryBound(
     to: Optional<UnsafeRawPointer>.self)
-  let wonRace = _stdlib_atomicCompareExchangeStrongPtr(
-    object: rawTarget, expected: &expected, desired: desiredPtr)
+  let wonRace = withUnsafeMutablePointer(to: &expected) {
+    _stdlib_atomicCompareExchangeStrongPtr(
+      object: rawTarget, expected: $0, desired: desiredPtr
+    )
+  }
   if !wonRace {
     // Some other thread initialized the value.  Balance the retain that we
     // performed on 'desired'.
@@ -151,7 +154,7 @@ func _stdlib_atomicInitializeARCRef(
 @_transparent
 public // @testable
 func _stdlib_atomicLoadARCRef(
-  object target: UnsafeMutablePointer<AnyObject?>
+  @_forwardedToC object target: UnsafeMutablePointer<AnyObject?>
 ) -> AnyObject? {
   let value = Builtin.atomicload_seqcst_Word(target._rawValue)
   if let unwrapped = UnsafeRawPointer(bitPattern: Int(value)) {

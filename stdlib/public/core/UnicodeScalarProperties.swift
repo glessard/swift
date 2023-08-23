@@ -756,13 +756,11 @@ extension Unicode.Scalar.Properties {
     // more than 1 scalar.
     var specialMappingLength = 0
 
-    let specialMappingPtr = _swift_stdlib_getSpecialMapping(
-      _scalar.value,
-      mapping.rawValue,
-      &specialMappingLength
-    )
+    let specialMapping = withUnsafeMutablePointer(to: &specialMappingLength) {
+      _swift_stdlib_getSpecialMapping(_scalar.value, mapping.rawValue, $0)
+    }
 
-    if let specialMapping = specialMappingPtr, specialMappingLength != 0 {
+    if let specialMapping, specialMappingLength != 0 {
       let buffer = UnsafeBufferPointer<UInt8>(
         start: specialMapping,
         count: specialMappingLength

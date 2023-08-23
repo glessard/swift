@@ -191,30 +191,30 @@ typealias _stdlib_posix_spawn_file_actions_t = posix_spawn_file_actions_t?
 
 @_silgen_name("_stdlib_posix_spawn_file_actions_init")
 internal func _stdlib_posix_spawn_file_actions_init(
-  _ file_actions: UnsafeMutablePointer<_stdlib_posix_spawn_file_actions_t>
+  @_forwardedToC _ file_actions: UnsafeMutablePointer<_stdlib_posix_spawn_file_actions_t>
 ) -> CInt
 
 @_silgen_name("_stdlib_posix_spawn_file_actions_destroy")
 internal func _stdlib_posix_spawn_file_actions_destroy(
-  _ file_actions: UnsafeMutablePointer<_stdlib_posix_spawn_file_actions_t>
+  @_forwardedToC _ file_actions: UnsafeMutablePointer<_stdlib_posix_spawn_file_actions_t>
 ) -> CInt
 
 @_silgen_name("_stdlib_posix_spawn_file_actions_addclose")
 internal func _stdlib_posix_spawn_file_actions_addclose(
-  _ file_actions: UnsafeMutablePointer<_stdlib_posix_spawn_file_actions_t>,
+  @_forwardedToC _ file_actions: UnsafeMutablePointer<_stdlib_posix_spawn_file_actions_t>,
   _ filedes: CInt) -> CInt
 
 @_silgen_name("_stdlib_posix_spawn_file_actions_adddup2")
 internal func _stdlib_posix_spawn_file_actions_adddup2(
-  _ file_actions: UnsafeMutablePointer<_stdlib_posix_spawn_file_actions_t>,
+  @_forwardedToC _ file_actions: UnsafeMutablePointer<_stdlib_posix_spawn_file_actions_t>,
   _ filedes: CInt,
   _ newfiledes: CInt) -> CInt
 
 @_silgen_name("_stdlib_posix_spawn")
 internal func _stdlib_posix_spawn(
-  _ pid: UnsafeMutablePointer<pid_t>?,
+  @_forwardedToC _ pid: UnsafeMutablePointer<pid_t>?,
   _ file: UnsafePointer<Int8>,
-  _ file_actions: UnsafePointer<_stdlib_posix_spawn_file_actions_t>?,
+  @_forwardedToC _ file_actions: UnsafePointer<_stdlib_posix_spawn_file_actions_t>?,
   _ attrp: UnsafePointer<posix_spawnattr_t>?,
   _ argv: UnsafePointer<UnsafeMutablePointer<Int8>?>,
   _ envp: UnsafePointer<UnsafeMutablePointer<Int8>?>?) -> CInt
@@ -403,7 +403,7 @@ public func spawnChild(_ args: [String])
   var pid: pid_t = -1
   var childArgs = args
   childArgs.insert(CommandLine.arguments[0], at: 0)
-  let interpreter = getenv("SWIFT_INTERPRETER")
+  let interpreter = "SWIFT_INTERPRETER".withCString(getenv)
   if interpreter != nil {
     if let invocation = String(validatingUTF8: interpreter!) {
       childArgs.insert(invocation, at: 0)
@@ -478,9 +478,11 @@ public func posixWaitpid(_ pid: pid_t) -> ProcessTerminationStatus {
     }
   }
 #else
-  while waitpid(pid, &status, 0) < 0 {
-    if errno != EINTR {
-      preconditionFailure("waitpid() failed")
+  withUnsafeMutablePointer(to: &status) {
+    while waitpid(pid, $0, 0) < 0 {
+      if errno != EINTR {
+        preconditionFailure("waitpid() failed")
+      }
     }
   }
 #endif

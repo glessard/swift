@@ -7582,12 +7582,13 @@ ConstraintSystem::matchTypes(Type type1, Type type2, ConstraintKind kind,
         unwrappedType2 = unwrapped;
       }
       bool isForwardedToC = false;
-      if (auto arg2Param = locator.last()
-                        ->getAs<LocatorPathElt::ApplyArgToParam>()) {
+      if (locator.endsWith<LocatorPathElt::ApplyArgToParam>()) {
+        auto arg2Param = locator.last()
+                         ->castTo<LocatorPathElt::ApplyArgToParam>();
+        isForwardedToC = arg2Param.getParameterFlags().isForwardedToC();
 //        if (ar2Param->getInnermostMethodContext()->hasClangNode()) {
 //          isForwardedToC = true
 //        } else ...
-        isForwardedToC = arg2Param->getParameterFlags().isForwardedToC();
       }
       PointerTypeKind pointerKind;
       if (Type pointeeTy =

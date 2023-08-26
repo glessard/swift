@@ -128,7 +128,7 @@ func _stdlib_atomicCompareExchangeStrongPtr<T>(
 @discardableResult
 public // @testable
 func _stdlib_atomicInitializeARCRef(
-  object target: UnsafeMutablePointer<AnyObject?>,
+  @_forwardedToC object target: UnsafeMutablePointer<AnyObject?>,
   desired: AnyObject
 ) -> Bool {
   // Note: this assumes that AnyObject? is layout-compatible with a RawPointer

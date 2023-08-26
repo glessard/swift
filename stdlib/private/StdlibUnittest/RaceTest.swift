@@ -614,8 +614,9 @@ class _InterruptibleSleep {
   func wake() {
     if completed { return }
 
-    let buffer: [UInt8] = [1]
-    let ret = write(writeEnd, buffer, 1)
+    let ret = withUnsafeBytes(of: UInt8(1)) {
+      write(writeEnd, $0.baseAddress, $0.count)
+    }
     precondition(ret >= 0)
   }
 }

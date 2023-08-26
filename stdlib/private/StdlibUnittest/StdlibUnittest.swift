@@ -848,11 +848,9 @@ func _printDebuggingAdvice(_ fullTestName: String) {
     free(buffer)
   }
 #else
-  let interpreter = getenv("SWIFT_INTERPRETER")
-  if interpreter != nil {
-    if let interpreterCmd = String(validatingUTF8: interpreter!) {
-        invocation.insert(interpreterCmd, at: 0)
-    }
+  if let interpreter = "SWIFT_INTERPRETER".withCString(getenv),
+     let interpreterCmd = String(validatingUTF8: interpreter) {
+    invocation.insert(interpreterCmd, at: 0)
   }
 #endif
   print("$ \(invocation.joined(separator: " ")) " +

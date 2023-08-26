@@ -27,20 +27,26 @@ import Swift
 private let coreFoundationPath =
   "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation"
 
-private let coreFoundationHandle = dlopen(coreFoundationPath, RTLD_LAZY)!
+private let coreFoundationHandle = coreFoundationPath.withCString {
+  dlopen($0, RTLD_LAZY)!
+}
 
 private let coreSymbolicationPath =
   "/System/Library/PrivateFrameworks/CoreSymbolication.framework/CoreSymbolication"
-private let coreSymbolicationHandle = dlopen(coreSymbolicationPath, RTLD_LAZY)!
+private let coreSymbolicationHandle = coreSymbolicationPath.withCString {
+  dlopen($0, RTLD_LAZY)!
+}
 
 private let crashReporterSupportPath =
   "/System/Library/PrivateFrameworks/CrashReporterSupport.framework/CrashReporterSupport"
 
-private let crashReporterSupportHandle
-  = dlopen(crashReporterSupportPath, RTLD_LAZY)!
+private let crashReporterSupportHandle = crashReporterSupportPath.withCString {
+  dlopen($0, RTLD_LAZY)!
+}
 
 private func symbol<T>(_ handle: UnsafeMutableRawPointer, _ name: String) -> T {
-  guard let result = dlsym(handle, name) else {
+  let result = name.withCString { dlsym(handle, $0) }
+  guard let result else {
     fatalError("Unable to look up \(name) in CoreSymbolication")
   }
   return unsafeBitCast(result, to: T.self)
@@ -204,14 +210,16 @@ private func fromCFString(_ cf: CFString) -> String {
   } else {
     var byteLen = CFIndex(0)
 
-    _ = CFStringGetBytes(cf,
-                         CFRangeMake(0, length),
-                         CFStringBuiltInEncodings.UTF8.rawValue,
-                         0,
-                         false,
-                         nil,
-                         0,
-                         &byteLen)
+    withUnsafeMutablePointer(to: &byteLen) {
+      _ = CFStringGetBytes(cf,
+                           CFRangeMake(0, length),
+                           CFStringBuiltInEncodings.UTF8.rawValue,
+                           0,
+                           false,
+                           nil,
+                           0,
+                           $0)
+    }
 
     let buffer = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: byteLen)
     defer {

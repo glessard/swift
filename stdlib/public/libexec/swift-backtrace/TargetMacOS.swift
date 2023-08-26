@@ -104,7 +104,9 @@ class Target {
 
   static func getTask(pid: pid_t) -> task_t? {
     var port: task_t = 0
-    let kr = task_read_for_pid(mach_task_self_, pid, &port)
+    let kr = withUnsafeMutablePointer(to: &port) {
+      task_read_for_pid(mach_task_self_, pid, $0)
+    }
     if kr != KERN_SUCCESS {
       return nil
     }
@@ -127,11 +129,15 @@ class Target {
   static func isPlatformBinary(pid: pid_t) -> Bool {
     var flags = UInt32(0)
 
-    return csops(pid,
-                 UInt32(CS_OPS_STATUS),
-                 &flags,
-                 MemoryLayout<UInt32>.size) != 0 ||
-      (flags & UInt32(CS_PLATFORM_BINARY | CS_PLATFORM_PATH)) != 0
+    return withUnsafeMutablePointer(to: &flags) { [flagsCopy = flags] flagPtr in
+      csops(
+        pid,
+        UInt32(CS_OPS_STATUS),
+        flagPtr,
+        MemoryLayout<UInt32>.size) != 0 ||
+        (flagsCopy & UInt32(CS_PLATFORM_BINARY | CS_PLATFORM_PATH)
+      ) != 0
+    }
   }
 
   init(crashInfoAddr: UInt64, limit: Int?, top: Int, cache: Bool) {
@@ -191,9 +197,11 @@ class Target {
   func fetchThreads(limit: Int?, top: Int, cache: Bool) {
     var threadPorts: thread_act_array_t? = nil
     var threadCount: mach_msg_type_number_t = 0
-    let kr = task_threads(task,
-                          &threadPorts,
-                          &threadCount)
+    let kr = withUnsafeMutablePointer(to: &threadPorts) { threadPortsPtr in
+      withUnsafeMutablePointer(to: &threadCount) { threadCountPtr in
+        task_threads(task, threadPortsPtr, threadCountPtr)
+      }
+    }
 
     if kr != KERN_SUCCESS {
       print("swift-backtrace: failed to enumerate threads - \(kr)",
@@ -311,22 +319,30 @@ class Target {
       tmpdir in
 
       let cmdfile = "\(tmpdir)/lldb.command"
-      guard let fp = fopen(cmdfile, "wt") else {
+      let fp = cmdfile.withCString { cmdfile in
+        "wt".withCString { mode in
+          fopen(cmdfile, mode)
+        }
+      }
+      guard let fp else {
         throw PosixError(errno: errno)
       }
-      if fputs("""
-                 #!/bin/bash
-                 clear
-                 echo "Once LLDB has attached, return to the other window and press any key"
-                 echo ""
-                 xcrun lldb --attach-pid \(pid) -o c
-                 """, fp) == EOF {
+      let script = """
+        #!/bin/bash
+        clear
+        echo "Once LLDB has attached, return to the other window and press any key"
+        echo ""
+        xcrun lldb --attach-pid \(pid) -o c
+      """
+      let scriptResult = script.withCString { fputs($0, fp) }
+      if scriptResult == EOF {
         throw PosixError(errno: errno)
       }
       if fclose(fp) != 0 {
         throw PosixError(errno: errno)
       }
-      if chmod(cmdfile, S_IXUSR|S_IRUSR) != 0 {
+      let cmdResult = cmdfile.withCString { chmod($0, S_IXUSR|S_IRUSR) }
+      if cmdResult != 0 {
         throw PosixError(errno: errno)
       }
 
@@ -354,10 +370,9 @@ private func mach_thread_info<T>(_ thread: thread_t,
 
   return withUnsafeMutablePointer(to: &result) { ptr in
     ptr.withMemoryRebound(to: natural_t.self, capacity: Int(count)) { intPtr in
-      return thread_info(thread,
-                         thread_flavor_t(flavor),
-                         intPtr,
-                         &count)
+      withUnsafeMutablePointer(to: &count) { countPtr in
+        thread_info(thread, thread_flavor_t(flavor), intPtr, countPtr)
+      }
     }
   }
 }

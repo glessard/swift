@@ -985,10 +985,9 @@ private func thread_get_state<T>(_ thread: thread_t,
   return withUnsafeMutablePointer(to: &result) { ptr in
     ptr.withMemoryRebound(to: natural_t.self,
                           capacity: Int(count)) { intPtr in
-      return thread_get_state(thread,
-                              thread_state_flavor_t(flavor),
-                              intPtr,
-                              &count)
+      return withUnsafeMutablePointer(to: &count) {
+        thread_get_state(thread, thread_state_flavor_t(flavor), intPtr, $0)
+      }
     }
   }
 }

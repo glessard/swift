@@ -41,7 +41,7 @@ class FileImageSource: ImageSource {
 
   public init(path: String) throws {
     _path = path
-    fd = _swift_open(path, O_RDONLY, 0)
+    fd = path.withCString { _swift_open($0, O_RDONLY, 0) }
     if fd < 0 {
       throw FileImageSourceError.posixError(_swift_get_errno())
     }

@@ -120,14 +120,15 @@ extension MemoryReader {
                        into buffer: UnsafeMutableBufferPointer<T>) throws {
     let size = UInt64(MemoryLayout<T>.stride * buffer.count)
     var sizeOut = UInt64(0)
-    let result = mach_vm_read_overwrite(task,
-                                        UInt64(address),
-                                        UInt64(size),
-                                        mach_vm_address_t(
-                                          Int(bitPattern: buffer.baseAddress)
-                                        ),
-                                        &sizeOut)
-
+    let result = withUnsafeMutablePointer(to: &sizeOut) {
+      mach_vm_read_overwrite(
+        task,
+        UInt64(address),
+        UInt64(size),
+        mach_vm_address_t(Int(bitPattern: buffer.baseAddress)),
+        $0
+      )
+    }
     if result != KERN_SUCCESS {
       throw MachError(result: result)
     }

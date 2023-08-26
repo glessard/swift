@@ -521,7 +521,7 @@ Generate a backtrace for the parent process.
   #if os(Linux) || os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
   static func setRawMode() -> termios {
     var oldAttrs = termios()
-    tcgetattr(0, &oldAttrs)
+    withUnsafeMutablePointer(to: &oldAttrs) { _ = tcgetattr(0, $0) }
 
     var newAttrs = oldAttrs
 
@@ -531,14 +531,13 @@ Generate a backtrace for the parent process.
     newAttrs.c_lflag &= ~UInt(ICANON | ECHO)
     #endif
 
-    tcsetattr(0, TCSANOW, &newAttrs)
+    withUnsafePointer(to: &newAttrs) { _ = tcsetattr(0, TCSANOW, $0) }
 
     return oldAttrs
   }
 
   static func resetInputMode(mode: termios) {
-    var theMode = mode
-    tcsetattr(0, TCSANOW, &theMode)
+    withUnsafePointer(to: mode) { _ = tcsetattr(0, TCSANOW, $0) }
   }
 
   static func waitForKey(_ message: String, timeout: Int?) -> Int32? {
@@ -557,7 +556,7 @@ Generate a backtrace for the parent process.
 
       var pfd = pollfd(fd: 0, events: Int16(POLLIN), revents: 0)
 
-      let ret = poll(&pfd, 1, 1000)
+      let ret = withUnsafeMutablePointer(to: &pfd) { poll($0, 1, 1000) }
       if ret == 0 {
         remaining -= 1
         if remaining == 0 {

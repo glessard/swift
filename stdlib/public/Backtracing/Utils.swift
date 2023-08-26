@@ -53,7 +53,7 @@ func pad<T>(_ value: T, _ width: Int, align: PadAlignment = .left) -> String {
 
 @_spi(Utils)
 public func readString(from file: String) -> String? {
-  let fd = _swift_open(file, O_RDONLY, 0)
+  let fd = file.withCString { _swift_open($0, O_RDONLY, 0) }
   if fd < 0 {
     return nil
   }

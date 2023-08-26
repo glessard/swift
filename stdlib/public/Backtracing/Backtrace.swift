@@ -393,7 +393,9 @@ public struct Backtrace: CustomStringConvertible, Sendable {
                                              fn: (OpaquePointer?) throws -> T)
     rethrows -> T {
     var kret = kern_return_t(KERN_SUCCESS)
-    let dyldInfo = _dyld_process_info_create(task, 0, &kret)
+      let dyldInfo = withUnsafeMutablePointer(to: &kret) {
+        _dyld_process_info_create(task, 0, $0)
+      }
 
     if kret != KERN_SUCCESS {
       fatalError("error: cannot create dyld process info")
@@ -585,7 +587,9 @@ public struct Backtrace: CustomStringConvertible, Sendable {
     let task = t as! task_t
     return withDyldProcessInfo(for: task) { dyldInfo in
       var cacheInfo = dyld_process_cache_info()
-      _dyld_process_info_get_cache(dyldInfo, &cacheInfo)
+      withUnsafeMutablePointer(to: &cacheInfo) {
+        _dyld_process_info_get_cache(dyldInfo, $0)
+      }
       let theUUID = withUnsafePointer(to: cacheInfo.cacheUUID) {
         Array(UnsafeRawBufferPointer(start: $0,
                                      count: MemoryLayout<uuid_t>.size))

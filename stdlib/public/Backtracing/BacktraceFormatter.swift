@@ -627,7 +627,10 @@ public struct BacktraceFormatter {
   /// with the point at which the program crashed highlighted.
   private func formattedSourceLines(from sourceLocation: SymbolicatedBacktrace.SourceLocation,
                                     indent theIndent: Int = 2) -> String? {
-    guard let fp = fopen(sourceLocation.path, "rt") else {
+    let fp = sourceLocation.path.withCString { path in
+      "rt".withCString { fopen(path, $0) }
+    }
+    guard let fp else {
       return nil
     }
     defer {

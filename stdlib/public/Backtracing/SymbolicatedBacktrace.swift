@@ -141,7 +141,7 @@ public struct SymbolicatedBacktrace: CustomStringConvertible {
 
     /// True if this symbol is a Swift thunk function.
     public var isSwiftThunk: Bool {
-      return _swift_backtrace_isThunkFunction(rawName)
+      return rawName.withCString(_swift_backtrace_isThunkFunction)
     }
 
     private func maybeUnderscore(_ sym: String) -> String {
@@ -181,7 +181,7 @@ public struct SymbolicatedBacktrace: CustomStringConvertible {
       if let location = sourceLocation,
          ((location.line == 0 && location.column == 0)
             || location.path.hasSuffix("<compiler-generated>"))
-           && !_swift_backtrace_isThunkFunction(rawName) {
+           && !isSwiftThunk {
         return true
       }
       return false
@@ -200,8 +200,12 @@ public struct SymbolicatedBacktrace: CustomStringConvertible {
     /// Demangle the raw name, if possible.
     private func demangleRawName() -> String {
       var length: size_t = 0
-      if let demangled = _swift_backtrace_demangle(rawName, rawName.utf8.count,
-                                                   nil, &length) {
+      let demangled = rawName.utf8.withContiguousStorageIfAvailable { name in
+        withUnsafeMutablePointer(to: &length) { length in
+          _swift_backtrace_demangle(name.baseAddress, name.count, nil, length)
+        }
+      }.unsafelyUnwrapped
+      if let demangled {
         defer { free(demangled) }
 
         // length is the size of the buffer that was allocated, *not* the

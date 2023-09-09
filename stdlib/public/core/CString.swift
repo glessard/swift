@@ -149,50 +149,81 @@ extension String {
   ///     }
   ///     // Prints "nil"
   ///
-  /// - Parameter cString: A pointer to a null-terminated UTF-8 code sequence.
-  public init?(validatingUTF8 cString: UnsafePointer<CChar>) {
-    let len = UTF8._nullCodeUnitOffset(in: cString)
-    guard let str = cString.withMemoryRebound(to: UInt8.self, capacity: len, {
-      String._tryFromUTF8(UnsafeBufferPointer(start: $0, count: len))
-    })
-    else { return nil }
+  /// - Parameter nullTerminatedUTF8:
+  ///       A pointer to a null-terminated UTF-8 code sequence.
+  @_silgen_name("$sSS14validatingUTF8SSSgSPys4Int8VG_tcfC")
+  public init?(validatingCString nullTerminatedUTF8: UnsafePointer<CChar>) {
+    let len = UTF8._nullCodeUnitOffset(in: nullTerminatedUTF8)
+    let string = nullTerminatedUTF8.withMemoryRebound(
+      to: UInt8.self,
+      capacity: len,
+      { String._tryFromUTF8(UnsafeBufferPointer(start: $0, count: len)) }
+    )
+    guard let string else { return nil }
+    self = string
+  }
 
-    self = str
+  @available(*, deprecated, renamed: "String.init(validatingCString:)")
+  @_silgen_name("_swift_stdlib_legacy_String_validatingUTF8")
+  @inlinable
+  @_alwaysEmitIntoClient
+  public init?(validatingUTF8 cString: UnsafePointer<CChar>) {
+    self.init(validatingCString: cString)
   }
 
   @inlinable
   @_alwaysEmitIntoClient
-  public init?(validatingUTF8 cString: [CChar]) {
-    guard let length = cString.firstIndex(of: 0) else {
+  public init?(validatingCString nullTerminatedUTF8: [CChar]) {
+    guard let length = nullTerminatedUTF8.firstIndex(of: 0) else {
       _preconditionFailure(
-        "input of String.init(validatingUTF8:) must be null-terminated"
+        "input of String.init(validatingCString:) must be null-terminated"
       )
     }
-    guard let string = cString.prefix(length).withUnsafeBufferPointer({
+    let string = nullTerminatedUTF8.prefix(length).withUnsafeBufferPointer {
       $0.withMemoryRebound(to: UInt8.self, String._tryFromUTF8(_:))
-    })
-    else { return nil }
-
+    }
+    guard let string else { return nil }
     self = string
+  }
+
+  @inlinable
+  @_alwaysEmitIntoClient
+  @available(*, deprecated, renamed: "String.init(validatingCString:)")
+  public init?(validatingUTF8 cString: [CChar]) {
+    self.init(validatingCString: cString)
+  }
+
+  @inlinable
+  @_alwaysEmitIntoClient
+  @available(*, deprecated, message: "Use a copy of the String argument")
+  public init?(validatingCString nullTerminatedUTF8: String) {
+    self = nullTerminatedUTF8.withCString(String.init(cString:))
   }
 
   @inlinable
   @_alwaysEmitIntoClient
   @available(*, deprecated, message: "Use a copy of the String argument")
   public init?(validatingUTF8 cString: String) {
-    self = cString.withCString(String.init(cString:))
+    self.init(validatingCString: cString)
+  }
+
+  @inlinable
+  @_alwaysEmitIntoClient
+  @available(*, deprecated, message: "Use String(_ scalar: Unicode.Scalar)")
+  public init?(validatingCString nullTerminatedUTF8: inout CChar) {
+    guard nullTerminatedUTF8 == 0 else {
+      _preconditionFailure(
+        "input of String.init(validatingUTF8:) must be null-terminated"
+      )
+    }
+    self = ""
   }
 
   @inlinable
   @_alwaysEmitIntoClient
   @available(*, deprecated, message: "Use String(_ scalar: Unicode.Scalar)")
   public init?(validatingUTF8 cString: inout CChar) {
-    guard cString == 0 else {
-      _preconditionFailure(
-        "input of String.init(validatingUTF8:) must be null-terminated"
-      )
-    }
-    self = ""
+    self.init(validatingCString: &cString)
   }
 
   /// Creates a new string by copying the null-terminated data referenced by

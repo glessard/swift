@@ -168,7 +168,7 @@ internal func CFStringGetBytes(_ s: CFString,
                                _ isExternalRepresentation: Bool,
                                _ buffer: UnsafeMutableRawPointer?,
                                _ maxBufLen: CFIndex,
-                               _ usedBufLen: UnsafeMutablePointer<CFIndex>?)
+                               @_forwardedToC _ usedBufLen: UnsafeMutablePointer<CFIndex>?)
   -> CFIndex {
   return Sym.CFStringGetBytes(s, range, encoding, lossByte,
                               isExternalRepresentation, buffer, maxBufLen,
@@ -203,16 +203,14 @@ private func fromCFString(_ cf: CFString) -> String {
                   as: UTF8.self)
   } else {
     var byteLen = CFIndex(0)
-    withUnsafeMutablePointer(to: &byteLen) {
-      _ = CFStringGetBytes(cf,
-                           CFRangeMake(0, length),
-                           CFStringBuiltInEncodings.UTF8.rawValue,
-                           0,
-                           false,
-                           nil,
-                           0,
-                           $0)
-    }
+    _ = CFStringGetBytes(cf,
+                         CFRangeMake(0, length),
+                         CFStringBuiltInEncodings.UTF8.rawValue,
+                         0,
+                         false,
+                         nil,
+                         0,
+                         &byteLen)
 
     let buffer = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: byteLen)
     defer {

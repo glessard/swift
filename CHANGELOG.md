@@ -65,6 +65,25 @@
   might not be available. The declaration has been removed, and must be imported
   from the appropriate C library module (e.g. Darwin or SwiftGlibc)
   
+* [SE-0405][]:
+
+  `String` has a new input-validating initializer:
+
+  ```swift
+  extension String {
+    public init?<Encoding: Unicode.Encoding>(
+      validating codeUnits: some Sequence<Encoding.CodeUnit>,
+      as: Encoding.Type
+    )
+  }
+  ```
+
+  This initializer can be used to validate UTF-8 input as follows:
+
+  ```swift
+  let invalid: [UInt8] = [67, 97, 102, 195, 255, 0b10001000]
+  ```
+
 * [SE-0270][]:
 
   The Standard Library now provides APIs for performing collection operations
@@ -10077,6 +10096,7 @@ using the `.dynamicType` member to retrieve the type of an expression should mig
 [SE-0389]: https://github.com/apple/swift-evolution/blob/main/proposals/0389-attached-macros.md
 [SE-0394]: https://github.com/apple/swift-evolution/blob/main/proposals/0394-swiftpm-expression-macros.md
 [SE-0397]: https://github.com/apple/swift-evolution/blob/main/proposals/0397-freestanding-declaration-macros.md
+[SE-0405]: <https://github.com/apple/swift-evolution/blob/main/proposals/0405-string-validating-initializers.md>
 [SE-0407]: https://github.com/apple/swift-evolution/blob/main/proposals/0407-member-macro-conformances.md
 [SE-0411]: https://github.com/apple/swift-evolution/blob/main/proposals/0411-isolated-default-values.md
 [SE-0412]: https://github.com/apple/swift-evolution/blob/main/proposals/0412-strict-concurrency-for-global-variables.md

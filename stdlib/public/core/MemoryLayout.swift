@@ -40,12 +40,12 @@
 ///             byteCount: count * MemoryLayout<Point>.stride,
 ///             alignment: MemoryLayout<Point>.alignment)
 @frozen // namespace
-public enum MemoryLayout<T: ~Copyable>: Copyable {}
+public enum MemoryLayout<T: ~Copyable & ~Escapable> {}
 
 @available(*, unavailable)
 extension MemoryLayout: _BitwiseCopyable {}
 
-extension MemoryLayout where T: ~Copyable {
+extension MemoryLayout where T: ~Copyable & ~Escapable {
   /// The contiguous memory footprint of `T`, in bytes.
   ///
   /// A type's size does not include any dynamically allocated or out of line
@@ -84,7 +84,7 @@ extension MemoryLayout where T: ~Copyable {
   }
 }
 
-extension MemoryLayout where T: ~Copyable {
+extension MemoryLayout where T: ~Copyable & ~Escapable {
   /// Returns the contiguous memory footprint of the given instance.
   ///
   /// The result does not include any dynamically allocated or out of line
@@ -237,13 +237,17 @@ extension MemoryLayout {
   ///   `nil`, it can be because `key` is computed, has observers, requires
   ///   reabstraction, or overlaps storage with other properties.
   @_transparent
+  @_unavailableInEmbedded
   public static func offset(of key: PartialKeyPath<T>) -> Int? {
+    // FIXME(noncopyableGenerics): The new (implicit) `where T: Copyable`
+    // extension constraint currently changes the mangling of this from a
+    // standalone function to an extension method.
     return key._storedInlineOffset
   }
 }
 
 // Not-yet-public alignment conveniences
-extension MemoryLayout where T: ~Copyable {
+extension MemoryLayout where T: ~Copyable & ~Escapable {
   internal static var _alignmentMask: Int { return alignment - 1 }
 
   internal static func _roundingUpToAlignment(_ value: Int) -> Int {

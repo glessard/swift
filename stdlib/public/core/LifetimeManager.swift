@@ -29,6 +29,18 @@ public func withExtendedLifetime<T: ~Copyable, Result: ~Copyable>(
   return try body()
 }
 
+@_transparent
+public func withExtendedLifetime<
+  T: ~Copyable & ~Escapable,
+  E: Error,
+  Result: ~Copyable & ~Escapable
+>(
+  _ x: borrowing T, _ body: () throws(E) -> Result
+) throws(E) -> dependsOn(x) Result {
+  defer { _fixLifetime(x) }
+  return try body()
+}
+
 /// Evaluates a closure while ensuring that the given instance is not destroyed
 /// before the closure returns.
 ///
@@ -51,7 +63,7 @@ public func withExtendedLifetime<T, Result>(
 // shorten the lifetime of x to be before this point.
 @_transparent
 @_preInverseGenerics
-public func _fixLifetime<T: ~Copyable>(_ x: borrowing T) {
+public func _fixLifetime<T: ~Copyable & ~Escapable>(_ x: borrowing T) {
   Builtin.fixLifetime(x)
 }
 

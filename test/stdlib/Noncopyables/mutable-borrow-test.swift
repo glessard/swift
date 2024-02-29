@@ -9,12 +9,14 @@ struct A: ~Copyable {
 }
 
 struct B: ~Escapable {
-  let value: Int
+  let p: UnsafePointer<Int>
 
   init(_ borrowed: borrowing A) -> _borrow(borrowed) Self {
-    self.value = borrowed.value
+    p = withUnsafePointer(to: borrowed.value) { $0 }
     return self
   }
+
+  var value: Int { p.pointee }
 }
 
 extension A {
@@ -27,10 +29,8 @@ extension A {
 
 func test(a: inout A) {
   let b = a.b
-  let c = b.value + 1
-  _ = consume b
   a.value = 1
-  print(c)
+  print(b.value)
 }
 
 var a = A(42)

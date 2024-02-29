@@ -1,5 +1,5 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-run-simple-swift(-enable-experimental-feature BuiltinModule -enable-experimental-feature NoncopyableGenerics -enable-experimental-feature NonescapableTypes -Xfrontend -enable-experimental-associated-type-inference -Xfrontend -disable-experimental-parser-round-trip)
+// RUN: %target-run-simple-swift(-enable-experimental-feature BuiltinModule -enable-experimental-feature NoncopyableGenerics -enable-experimental-feature NonescapableTypes -Xfrontend -enable-experimental-associated-type-inference -Xfrontend -disable-experimental-parser-round-trip -Xllvm -enable-lifetime-dependence-diagnostics)
 // REQUIRES: executable_test
 
 /* -Xllvm -enable-lifetime-dependence-diagnostics */

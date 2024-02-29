@@ -3,35 +3,43 @@
 // REQUIRES: executable_test
 
 struct A: ~Copyable {
-  var value: Int
+  var values: (Int, Int, Int, Int, Int, Int, Int, Int)
 
-  init(_ value: Int) { self.value = value }
+  init(_ i: Int) {
+    values = (i+0,i+1,i+2,i+3,i+4,i+5,i+6,i+7)
+  }
 }
 
 struct B: ~Escapable {
   let p: UnsafePointer<Int>
+  let c: Int
 
   init(_ borrowed: borrowing A) -> _borrow(borrowed) Self {
-    p = withUnsafePointer(to: borrowed.value) { $0 }
+    p = withUnsafePointer(to: borrowed.values) {
+      $0.withMemoryRebound(to: Int.self, capacity: 5) { $0 }
+    }
+    c = MemoryLayout.stride(ofValue: borrowed.values)/MemoryLayout<Int>.stride
     return self
   }
 
-  var value: Int { p.pointee }
-}
-
-extension A {
-  var b: B {
-    borrowing _read {
-      yield B(self)
+  subscript(_ i: Int) -> Int {
+    get {
+      precondition(0 <= i && i < c)
+      return p[i]
     }
   }
 }
 
-func test(a: inout A) {
+extension A {
+  var b: B {
+    borrowing get { B(self) }
+  }
+}
+
+func test(a: borrowing A) {
   let b = a.b
-//  a.value = 1
-  print(b.value)
+  print((b[0], b[5]))
 }
 
 var a = A(42)
-test(a: &a)
+test(a: a)

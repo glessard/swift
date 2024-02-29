@@ -4,7 +4,7 @@
 
 func borrow(a: borrowing [Int]) {
   let s = a.storage
-  print(s.count)
+  print(mean(s))
 //  print(s[offset: 0])
 }
 
@@ -13,3 +13,13 @@ func test() {
   borrow(a: a)
   a.append(a.count)
 }
+
+func mean(_ ints: StorageView<Int>) -> Double {
+  var t = 0
+  for o in ints.indices {
+    t += ints[o]
+  }
+  return Double(t)/Double(ints.count)
+}
+
+test()

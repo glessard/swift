@@ -34,61 +34,55 @@ extension MyVector: ContiguousStorage {
   }
 }
 
-/*
+func mean(_ ints: StorageView<Int>) -> Double {
+  var t = 0
+  for o in ints.indices {
+    t += ints[o]
+  }
+  return Double(t)/Double(ints.count)
+}
 
+func mean1(_ a: borrowing MyVector) -> Double {
+  let span = a.storage
+  print(#function, terminator: " ")
+  return mean(span)
+}
 
+func mean2(_ a: [Int]) -> Double {
+  let span = a.storage
+  print(#function, terminator: " ")
+  return mean(span)
+}
 
+func mean3(
+  _ a: borrowing some ContiguousStorage<Int> & ~Copyable & ~Escapable
+) -> Double {
+  let span = a.storage
+  print(#function, terminator: " ")
+  return mean(span)
+}
 
+//func means() {
+//  let a = MyVector()
+//  print(mean1(a))
+//
+//  let array = Array(0..<c)
+//  print(mean2(array))
+//
+//  print(mean3(a))
+//  print(mean3(array))
+//}
+//
+//means()
 
+func mutation() {
+  var a = MyVector()
+  let span = a.storage
+  a.mutate(42)
+  print(mean3(span))
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+mutation()
 
 
 
@@ -1054,4 +1048,3 @@ extension ContiguousArray: ContiguousStorage {
 }
 
 #endif
-*/

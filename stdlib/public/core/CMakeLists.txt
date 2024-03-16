@@ -158,6 +158,8 @@ split_embedded_sources(
   EMBEDDED StaticString.swift
     NORMAL StaticPrint.swift
     NORMAL StorageView/ContiguousStorage.swift
+    NORMAL StorageView/RawSpan.swift
+    NORMAL StorageView/RawSpanIndex.swift
     NORMAL StorageView/StorageView.swift
     NORMAL StorageView/StorageViewIndex.swift
     NORMAL StorageView/StorageViewIterator.swift

@@ -1,4 +1,4 @@
-//===--- StorageViewIndex.swift -------------------------------------------===//
+//===--- RawSpanIndex.swift -----------------------------------------------===//
 //
 // This source file is part of the Swift.org open source project
 //
@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if hasFeature(NonescapableTypes)
+#if hasFeature(NonescapableTypes) && hasFeature(BitwiseCopyable)
 
-extension StorageView /*where Element: ~Copyable & ~Escapable*/ {
+extension RawSpan /*where Element: ~Copyable & ~Escapable*/ {
   @frozen
   public struct Index {
     @usableFromInline let _allocation: UnsafeRawPointer
@@ -27,51 +27,42 @@ extension StorageView /*where Element: ~Copyable & ~Escapable*/ {
     internal init(_rawStart: UnsafeRawPointer) {
       self.init(allocation: _rawStart, rawValue: _rawStart)
     }
-  }
-}
 
-extension StorageView.Index /*where Element: ~Copyable*/ /*& ~Escapable*/ {
-
-  @inlinable @inline(__always)
-  var isAligned: Bool {
-    (Int(bitPattern: _rawValue) & (MemoryLayout<Element>.alignment-1)) == 0
+    @inlinable @inline(__always)
+    internal init<T: _BitwiseCopyable>(_ index: StorageView<T>.Index) {
+      self.init(allocation: index._allocation, rawValue: index._rawValue)
+    }
   }
 }
 
 @available(*, unavailable)
-extension StorageView.Index: Sendable {}
+extension RawSpan.Index: Sendable {}
 
-extension StorageView.Index: Equatable /*where Element: ~Copyable & ~Escapable*/ {
+extension RawSpan.Index: Equatable /*where Element: ~Copyable & ~Escapable*/ {
   public static func == (lhs: Self, rhs: Self) -> Bool {
     // note: if we don't define this function, then `Strideable` will define it.
     (lhs._allocation == rhs._allocation) && (lhs._rawValue == rhs._rawValue)
   }
 }
 
-extension StorageView.Index: Hashable /*where Element: ~Copyable & ~Escapable*/ {}
+extension RawSpan.Index: Hashable /*where Element: ~Copyable & ~Escapable*/ {}
 
-extension StorageView.Index: Strideable /*where Element: ~Copyable*/ /*& ~Escapable*/ {
+extension RawSpan.Index: Strideable /*where Element: ~Copyable*/ /*& ~Escapable*/ {
   public typealias Stride = Int
 
   @inlinable @inline(__always)
   public func distance(to other: Self) -> Int {
     precondition(_allocation == other._allocation)
-    let bytes = _rawValue.distance(to: other._rawValue)
-    let (q, r) = bytes.quotientAndRemainder(dividingBy: MemoryLayout<Element>.stride)
-    precondition(r == 0)
-    return q
+    return _rawValue.distance(to: other._rawValue)
   }
 
   @inlinable @inline(__always)
   public func advanced(by n: Int) -> Self {
-    .init(
-      allocation: _allocation,
-      rawValue: _rawValue.advanced(by: n &* MemoryLayout<Element>.stride)
-    )
+    .init(allocation: _allocation, rawValue: _rawValue.advanced(by: n))
   }
 }
 
-extension StorageView.Index: Comparable /*where Element: ~Copyable*/ /*& ~Escapable*/ {
+extension RawSpan.Index: Comparable /*where Element: ~Copyable*/ /*& ~Escapable*/ {
   @inlinable @inline(__always)
   public static func <(lhs: Self, rhs: Self) -> Bool {
     return lhs._rawValue < rhs._rawValue

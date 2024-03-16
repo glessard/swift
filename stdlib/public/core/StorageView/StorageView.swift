@@ -10,60 +10,120 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if hasFeature(NonescapableTypes)
+
 // A StorageView<Element> represents a span of memory which
 // contains initialized instances of `Element`.
 @frozen
-public struct StorageView<Element: ~Copyable>: Copyable, ~Escapable {
+public struct StorageView<Element/*: ~Copyable & ~Escapable*/>: Copyable, ~Escapable {
   @usableFromInline let _start: Index
   @usableFromInline let _count: Int
+
+  @inlinable @inline(__always)
+  internal init<Owner: ~Copyable & ~Escapable>(
+    _unchecked start: Index,
+    count: Int,
+    borrowing owner: borrowing Owner
+  ) -> _borrow(owner) Self {
+    self._start = start
+    self._count = count
+    return self
+  }
+
+  @inlinable @inline(__always)
+  internal init<Owner: ~Copyable & ~Escapable>(
+    _unchecked start: Index,
+    count: Int,
+    consuming owner: consuming Owner
+  ) -> _consume(owner) Self {
+    self._start = start
+    self._count = count
+    return self
+  }
 }
 
 @available(*, unavailable)
 extension StorageView: Sendable {}
 
-extension StorageView where Element: ~Copyable {
+extension StorageView /*where Element: ~Copyable*/ /*& ~Escapable*/ {
 
-  @inlinable @inline(__always)
-  internal init<Owner: ~Escapable & ~Copyable>(
-    _unchecked start: Index,
-    count: Int,
-    owner: borrowing Owner
-  ) /* -> borrow(owner) Self */ {
-    self._start = start
-    self._count = count
-  }
-
-  @inlinable @inline(__always)
-  internal init<Owner: ~Escapable & ~Copyable>(
+   @inlinable @inline(__always)
+  internal init<Owner: ~Copyable & ~Escapable>(
     start: Index,
     count: Int,
-    owner: borrowing Owner
-  ) /* -> borrow(owner) Self */ {
+    borrowing owner: borrowing Owner
+  ) -> _borrow(owner) Self {
     precondition(count >= 0, "Count must not be negative")
     precondition(
       start.isAligned,
       "baseAddress must be properly aligned for accessing \(Element.self)"
     )
+#if NOTBOGUS
     self.init(_unchecked: start, count: count, owner: owner)
+#else
+    self._start = start
+    self._count = count
+#endif
+    return self
   }
 
-  public init<Owner: ~Escapable & ~Copyable>(
-    unsafeBufferPointer buffer: UnsafeBufferPointer<Element>,
-    owner: borrowing Owner
-  ) /* -> borrow(owner) Self */ {
-    guard let baseAddress = buffer.baseAddress else {
-      fatalError("StorageView requires a non-nil base address")
-    }
-    self.init(unsafePointer: baseAddress, count: buffer.count, owner: owner)
+   @inlinable @inline(__always)
+  internal init<Owner: ~Copyable & ~Escapable>(
+    start: Index,
+    count: Int,
+    consuming owner: consuming Owner
+  ) -> _consume(owner) Self {
+    precondition(count >= 0, "Count must not be negative")
+    precondition(
+      start.isAligned,
+      "baseAddress must be properly aligned for accessing \(Element.self)"
+    )
+    self._start = start
+    self._count = count
+    return self
   }
 
-  public init<Owner: ~Escapable & ~Copyable>(
+  public init<Owner: ~Copyable & ~Escapable>(
     unsafePointer: UnsafePointer<Element>,
     count: Int,
     owner: borrowing Owner
-  ) /* -> borrow(owner) Self */ {
+  ) -> _borrow(owner) Self {
     let start = Index(_rawStart: unsafePointer)
+#if NOTBOGUS
     self.init(start: start, count: count, owner: owner)
+#else
+    precondition(count >= 0, "Count must not be negative")
+    precondition(
+      start.isAligned,
+      "baseAddress must be properly aligned for accessing \(Element.self)"
+    )
+    self._start = start
+    self._count = count
+#endif
+    return self
+  }
+
+  public init<Owner: ~Copyable & ~Escapable>(
+    unsafeBufferPointer buffer: UnsafeBufferPointer<Element>,
+    owner: borrowing Owner
+  ) -> _borrow(owner) Self {
+    guard let baseAddress = buffer.baseAddress else {
+      fatalError("StorageView requires a non-nil base address")
+    }
+#if NOTBOGUS
+    self.init(unsafePointer: baseAddress, count: buffer.count, owner: owner)
+#else
+    let start = Index(_rawStart: baseAddress)
+    let count = buffer.count
+    precondition(count >= 0, "Count must not be negative")
+    precondition(
+      start.isAligned,
+      "baseAddress must be properly aligned for accessing \(Element.self)"
+    )
+    self._start = start
+    self._count = count
+#endif
+    return self
   }
 }
 
@@ -71,7 +131,7 @@ extension StorageView where Element: ~Copyable {
 extension StorageView where Element: _BitwiseCopyable {
 
   @inlinable
-  internal init<Owner: ~Escapable & ~Copyable>(
+  internal init<Owner: ~Copyable & ~Escapable>(
     start index: Index,
     count: Int,
     owner: borrowing Owner
@@ -81,7 +141,7 @@ extension StorageView where Element: _BitwiseCopyable {
     self._count = count
   }
 
-  public init<Owner: ~Escapable & ~Copyable>(
+  public init<Owner: ~Copyable & ~Escapable>(
     unsafeBytes buffer: UnsafeRawBufferPointer,
     as type: Element.Type,
     owner: borrowing Owner
@@ -97,7 +157,7 @@ extension StorageView where Element: _BitwiseCopyable {
     )
   }
 
-  public init<Owner: ~Escapable & ~Copyable>(
+  public init<Owner: ~Copyable & ~Escapable>(
     unsafeRawPointer: UnsafeRawPointer,
     as type: Element.Type,
     count: Int,
@@ -113,9 +173,9 @@ extension StorageView where Element: _BitwiseCopyable {
 
 extension StorageView/*: Sequence*/ where Element: Copyable & Escapable {
 
-  public func makeIterator() -> StorageView<Element>.Iterator {
-    .init(from: startIndex, to: endIndex, owner: self)
-  }
+//  public var iterator: Iterator {
+//    borrowing _read { yield .init(owner: self) }
+//  }
 }
 
 extension StorageView where Element: Equatable {
@@ -136,10 +196,30 @@ extension StorageView where Element: Equatable {
     }
     return true
   }
+
+  @inlinable
+  public func elementsEqual(_ other: some Collection<Element>) -> Bool {
+    guard count == other.count else { return false }
+    if count == 0 { return true }
+
+    return elementsEqual(AnySequence(other))
+  }
+
+  @inlinable
+  public func elementsEqual(_ other: some Sequence<Element>) -> Bool {
+    var index = self.startIndex
+    let endIndex = self.endIndex
+    for otherElement in other {
+      if index >= endIndex { return false }
+      if self[unchecked: index] != otherElement { return false }
+      formIndex(after: &index)
+    }
+    return index == endIndex
+  }
 }
 
-//MARK: Bounds checking
-extension StorageView where Element: ~Copyable {
+//MARK: Index Validation, Bounds Checking
+extension StorageView /*where Element: ~Copyable*/ /*& ~Escapable*/ {
 
   @inlinable @inline(__always)
   func boundsCheckPrecondition(_ position: Index) {
@@ -198,15 +278,17 @@ extension StorageView where Element: _BitwiseCopyable {
 }
 #endif
 
-//MARK: Collection, RandomAccessCollection
-extension StorageView where Element: ~Copyable {
-//  Collection,
-//  BidirectionalCollection,
-//  RandomAccessCollection
-
+//MARK: Collection typealiases
+extension StorageView /*where Element: ~Copyable & ~Escapable*/ {
   public typealias Element = Element
-//  public typealias Index = StorageView<Element>.Index
   public typealias SubSequence = Self
+}
+
+//MARK: Index Manipulation
+extension StorageView /*where Element: ~Copyable & ~Escapable*/ {
+  //  Collection,
+  //  BidirectionalCollection,
+  //  RandomAccessCollection
 
   @inlinable @inline(__always)
   public var startIndex: Index { _start }
@@ -215,15 +297,17 @@ extension StorageView where Element: ~Copyable {
   public var endIndex: Index { _start.advanced(by: _count) }
 
   @inlinable @inline(__always)
-  public var count: Int { _count }
+  public var count: Int {
+    borrowing get { self._count }
+  }
+
+  @inlinable @inline(__always)
+  public var isEmpty: Bool { count == 0 }
 
   @inlinable @inline(__always)
   public var indices: Range<Index> {
     .init(uncheckedBounds: (startIndex, endIndex))
   }
-
-  @inlinable @inline(__always)
-  public var isEmpty: Bool { count == 0 }
 
   @inlinable @inline(__always)
   public func index(after i: Index) -> Index {
@@ -259,6 +343,13 @@ extension StorageView where Element: ~Copyable {
   public func distance(from start: Index, to end: Index) -> Int {
     start.distance(to: end)
   }
+}
+
+//MARK: Index-based Subscripts
+extension StorageView /*where Element: ~Copyable*/ {
+  //  Collection,
+  //  BidirectionalCollection,
+  //  RandomAccessCollection
 
   //FIXME: lifetime-dependent on self
   @inlinable @inline(__always)
@@ -281,6 +372,28 @@ extension StorageView where Element: ~Copyable {
     }
   }
 
+  consuming public func sub(consuming bounds: Range<Index>) -> _consume(self) Self {
+    StorageView(
+      start: bounds.lowerBound,
+      count: bounds.count,
+      consuming: self
+    )
+  }
+
+  borrowing public func sub(borrowing bounds: Range<Index>) -> _borrow(self) Self {
+    StorageView(
+      start: bounds.lowerBound,
+      count: bounds.count,
+      borrowing: copy self
+    )
+  }
+
+  public var subview: Self {
+    borrowing get {
+      copy self
+    }
+  }
+
   //FIXME: lifetime-dependent on self
   @inlinable @inline(__always)
   public subscript(bounds: Range<Index>) -> Self {
@@ -293,38 +406,38 @@ extension StorageView where Element: ~Copyable {
   //FIXME: lifetime-dependent on self
   @inlinable @inline(__always)
   public subscript(unchecked bounds: Range<Index>) -> Self {
-    _read {
-      yield StorageView(
+    borrowing get {
+      StorageView(
         start: bounds.lowerBound,
         count: bounds.count,
-        owner: self
+        borrowing: copy self
       )
     }
   }
 
-  //FIXME: lifetime-dependent on self
-  @_alwaysEmitIntoClient
-  public subscript(bounds: some RangeExpression<Index>) -> Self {
-    _read {
-      yield self[bounds.relative(to: indices)]
-    }
-  }
-
-  //FIXME: lifetime-dependent on self
-  @_alwaysEmitIntoClient
-  public subscript(unchecked bounds: some RangeExpression<Index>) -> Self {
-    _read {
-      yield self[unchecked: bounds.relative(to: indices)]
-    }
-  }
-
-  //FIXME: lifetime-dependent on self
-  @_alwaysEmitIntoClient
-  public subscript(x: UnboundedRange) -> Self {
-    _read {
-      yield self[unchecked: indices]
-    }
-  }
+//  //FIXME: lifetime-dependent on self
+//  @_alwaysEmitIntoClient
+//  public subscript(bounds: some RangeExpression<Index>) -> Self {
+//    borrowing get {
+//      self[bounds.relative(to: indices)]
+//    }
+//  }
+//
+//  //FIXME: lifetime-dependent on self
+//  @_alwaysEmitIntoClient
+//  public subscript(unchecked bounds: some RangeExpression<Index>) -> Self {
+//    borrowing get {
+//      self[unchecked: bounds.relative(to: indices)]
+//    }
+//  }
+//
+//  //FIXME: lifetime-dependent on self
+//  @_alwaysEmitIntoClient
+//  public subscript(x: UnboundedRange) -> Self {
+//    borrowing get {
+//      self[unchecked: indices]
+//    }
+//  }
 }
 
 #if hasFeature(BitwiseCopyable)
@@ -394,16 +507,67 @@ extension StorageView where Element: _BitwiseCopyable {
 }
 #endif
 
+//MARK: integer offset subscripts
+extension StorageView /*where Element: ~Copyable*/ {
+
+  //FIXME: lifetime-dependent on self
+  @inlinable @inline(__always)
+  public subscript(offset offset: Int) -> Element {
+    _read {
+      precondition(0 <= offset && offset < count)
+      yield self[uncheckedOffset: offset]
+    }
+  }
+
+  //FIXME: lifetime-dependent on self
+  @inlinable @inline(__always)
+  public subscript(uncheckedOffset offset: Int) -> Element {
+    _read {
+      yield self[unchecked: index(startIndex, offsetBy: offset)]
+    }
+  }
+//
+//  //FIXME: lifetime-dependent on self
+//  @inlinable @inline(__always)
+//  public subscript(offsets: Range<Int>) -> Self {
+//    get {
+//      precondition(0 <= offsets.lowerBound && offsets.upperBound <= count)
+//      return self[uncheckedOffsets: offsets]
+//    }
+//  }
+//
+//  //FIXME: lifetime-dependent on self
+//  @inlinable @inline(__always)
+//  public subscript(uncheckedOffsets offsets: Range<Int>) -> Self {
+//    borrowing get {
+//      StorageView(
+//        start: index(startIndex, offsetBy: offsets.lowerBound),
+//        count: offsets.count,
+//        borrowing: copy self
+//      )
+//    }
+//  }
+//
+//  //FIXME: lifetime-dependent on self
+//  @_alwaysEmitIntoClient
+//  public subscript(offsets: some RangeExpression<Int>) -> Self {
+//    borrowing get {
+//      self[offsets.relative(to: 0..<count)]
+//    }
+//  }
+//
+//  //FIXME: lifetime-dependent on self
+//  @_alwaysEmitIntoClient
+//  public subscript(uncheckedOffsets offsets: some RangeExpression<Int>) -> Self {
+//    borrowing get {
+//      self[uncheckedOffsets: offsets.relative(to: 0..<count)]
+//    }
+//  }
+}
+
 //MARK: withUnsafeRaw...
 #if hasFeature(BitwiseCopyable)
 extension StorageView where Element: _BitwiseCopyable {
-
-  //FIXME: mark closure parameter as non-escaping
-  public func withUnsafeRawPointer<R>(
-    _ body: (_ pointer: UnsafeRawPointer, _ count: Int) throws -> R
-  ) rethrows -> R {
-    try body(_start._rawValue, count*MemoryLayout<Element>.stride)
-  }
 
   //FIXME: mark closure parameter as non-escaping
   public func withUnsafeBytes<R>(
@@ -419,7 +583,7 @@ extension StorageView where Element: _BitwiseCopyable {
 #endif
 
 //MARK: withUnsafePointer, etc.
-extension StorageView where Element: ~Copyable {
+extension StorageView /*where Element: ~Copyable*/ {
 
   //FIXME: mark closure parameter as non-escaping
   public func withUnsafeBufferPointer<R>(
@@ -429,6 +593,18 @@ extension StorageView where Element: ~Copyable {
       try body(.init(start: $0, count: count))
     }
   }
+// This should work:
+//  borrowing public func withUnsafeBufferPointer<
+//    Result: ~Copyable /*& ~Escapable*/,
+//    E: Error
+//  >(
+//    _ body: (UnsafeBufferPointer<Element>) throws(E) -> /*_borrow(0)*/ Result
+//  ) throws(E) -> /*_borrow(self)*/ Result {
+//    try _start._rawValue.withMemoryRebound(to: Element.self, capacity: count) {
+//      (pointer: UnsafePointer<Element>) throws(E) -> Result in
+//      try body(.init(start: pointer, count: count))
+//    }
+//  }
 
   //FIXME: mark closure parameter as non-escaping
   public func withContiguousStorageIfAvailable<R>(
@@ -499,7 +675,9 @@ extension StorageView where Element: _BitwiseCopyable {
   /// - Parameters:
   ///   - type: The type you wish to view the memory as
   /// - Returns: A new `StorageView` over elements of type `T`
-  public func view<T: _BitwiseCopyable>(as: T.Type) -> StorageView<T> {
+  borrowing public func view<T: _BitwiseCopyable>(
+    as: T.Type
+  ) -> _borrow(self) StorageView<T> {
     let bc = count*MemoryLayout<Element>.stride
     let (nc, rem) = bc.quotientAndRemainder(dividingBy: MemoryLayout<T>.stride)
     precondition(rem == 0)
@@ -507,32 +685,12 @@ extension StorageView where Element: _BitwiseCopyable {
       allocation: startIndex._allocation,
       rawValue: startIndex._rawValue
     )
-    return StorageView<T>(_unchecked: start, count: nc, owner: self)
+    return StorageView<T>(_unchecked: start, count: nc, borrowing: self)
   }
 }
 #endif
 
-//MARK: integer offset subscripts
-
-extension StorageView where Element: ~Copyable {
-
-  @inlinable @inline(__always)
-  public subscript(offset offset: Int) -> Element {
-    _read {
-      precondition(0 <= offset && offset < count)
-      yield self[uncheckedOffset: offset]
-    }
-  }
-
-  @inlinable @inline(__always)
-  public subscript(uncheckedOffset offset: Int) -> Element {
-    _read {
-      yield self[unchecked: index(startIndex, offsetBy: offset)]
-    }
-  }
-}
-
-extension StorageView {
+extension StorageView where Element: Copyable {
   @inlinable
   public var first: Element? {
     isEmpty ? nil : self[unchecked: startIndex]
@@ -545,59 +703,54 @@ extension StorageView {
 }
 
 //MARK: one-sided slicing operations
-extension StorageView {
+extension StorageView /*where Element: ~Copyable*/ {
 
-  //FIXME: lifetime-dependent on self
-  public func prefix(upTo index: Index) -> Self {
-    index == startIndex
-    ? Self(_unchecked: _start, count: 0, owner: self)
-    : prefix(through: index.advanced(by: -1))
-  }
+//  borrowing public func prefix(upTo index: Index) -> _borrow(self) Self {
+//    index == startIndex
+//    ? Self(_unchecked: _start, count: 0, borrowing: copy self)
+//    : prefix(through: index.advanced(by: -1))
+//  }
 
-  //FIXME: lifetime-dependent on self
-  public func prefix(through index: Index) -> Self {
+  borrowing public func prefix(through index: Index) -> _borrow(self) Self {
     boundsCheckPrecondition(index)
     let nc = distance(from: startIndex, to: index) &+ 1
-    return Self(_unchecked: _start, count: nc, owner: self)
+    return Self(_unchecked: _start, count: nc, borrowing: copy self)
   }
 
-  //FIXME: lifetime-dependent on self
-  public func prefix(_ maxLength: Int) -> Self {
+  consuming public func prefix(_ maxLength: Int) -> _consume(self) Self {
     precondition(maxLength >= 0, "Can't have a prefix of negative length.")
     let nc = maxLength < count ? maxLength : count
-    return Self(_unchecked: _start, count: nc, owner: self)
+    return Self(_unchecked: _start, count: nc, consuming: self)
   }
 
-  //FIXME: lifetime-dependent on self
-  public func dropLast(_ k: Int = 1) -> Self {
+  borrowing public func dropLast(_ k: Int = 1) -> _borrow(self) Self {
     precondition(k >= 0, "Can't drop a negative number of elements.")
     let nc = k < count ? count&-k : 0
-    return Self(_unchecked: _start, count: nc, owner: self)
+    return Self(_unchecked: _start, count: nc, borrowing: copy self)
   }
 
-  //FIXME: lifetime-dependent on self
-  public func suffix(from index: Index) -> Self {
-    if index == endIndex {
-      return Self(_unchecked: index, count: 0, owner: self )
-    }
-    boundsCheckPrecondition(index)
-    let nc = distance(from: index, to: endIndex)
-    return Self(_unchecked: index, count: nc, owner: self)
-  }
+//  borrowing public func suffix(from index: Index) -> _borrow(self) Self {
+//    if index == endIndex {
+//      return Self(_unchecked: index, count: 0, borrowing: copy self )
+//    }
+//    boundsCheckPrecondition(index)
+//    let nc = distance(from: index, to: endIndex)
+//    return Self(_unchecked: index, count: nc, borrowing: copy self)
+//  }
 
-  //FIXME: lifetime-dependent on self
-  public func suffix(_ maxLength: Int) -> Self {
+  borrowing public func suffix(_ maxLength: Int) -> _borrow(self) Self {
     precondition(maxLength >= 0, "Can't have a suffix of negative length.")
     let nc = maxLength < count ? maxLength : count
     let newStart = _start.advanced(by: count&-nc)
-    return Self(_unchecked: newStart, count: nc, owner: self)
+    return Self(_unchecked: newStart, count: nc, borrowing: copy self)
   }
 
-  //FIXME: lifetime-dependent on self
-  public func dropFirst(_ k: Int = 1) -> Self {
+  borrowing public func dropFirst(_ k: Int = 1) -> _borrow(self) Self {
     precondition(k >= 0, "Can't drop a negative number of elements.")
     let dc = k < count ? k : count
     let newStart = _start.advanced(by: dc)
-    return Self(_unchecked: newStart, count: count&-dc, owner: self)
+    return Self(_unchecked: newStart, count: count&-dc, borrowing: copy self)
   }
 }
+
+#endif

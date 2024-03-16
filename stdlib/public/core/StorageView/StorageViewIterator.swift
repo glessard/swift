@@ -10,50 +10,49 @@
 //
 //===----------------------------------------------------------------------===//
 
-extension StorageView where Element: ~Copyable {
+#if hasFeature(NonescapableTypes)
+
+extension StorageView /*where Element: ~Copyable & ~Escapable*/ {
   @frozen
   public struct Iterator: Copyable, ~Escapable {
-    var curPointer: UnsafeRawPointer
+    private var curPointer: UnsafeRawPointer
     let endPointer: UnsafeRawPointer
+
+    init(owner: borrowing StorageView<Element>) -> _borrow(owner) Self {
+      self.curPointer = owner.startIndex._rawValue
+      self.endPointer = owner.endIndex._rawValue
+      return self
+    }
   }
 }
 
-extension StorageView.Iterator where Element: ~Copyable {
+extension StorageView.Iterator where Element: Copyable & Escapable {
 
-  init<Owner: ~Escapable & ~Copyable>(
-    startPointer: UnsafeRawPointer,
-    endPointer: UnsafeRawPointer,
-    owner: borrowing Owner
-  ) /*-> borrow(owner) Self*/ {
-    self.curPointer = startPointer
-    self.endPointer = endPointer
-  }
-
-  init<Owner: ~Escapable & ~Copyable>(
-    from start: StorageView.Index,
-    to end: StorageView.Index,
-    owner: borrowing Owner
-  ) /*-> borrow(owner) Self*/ {
-    assert(start._allocation == end._allocation)
-    self.init(
-      startPointer: start._rawValue, endPointer: end._rawValue, owner: owner
-    )
+  // This is the `IteratorProtocol` requirement, except that
+  // StorageView.Iterator does not conform to `Escapable`
+  public mutating func next() -> Element? {
+    guard curPointer < endPointer else { return nil }
+    defer {
+      curPointer = curPointer.advanced(by: MemoryLayout<Element>.stride)
+    }
+    if _isPOD(Element.self) {
+      return curPointer.loadUnaligned(as: Element.self)
+    }
+    return curPointer.load(as: Element.self)
   }
 }
 
-//extension StorageView.Iterator: IteratorProtocol where Element: Copyable & Escapable {
-//
-//  public typealias Element = StorageView.Element
-//
-//  public mutating func next() -> Element? {
-//    guard curPointer < endPointer else { return nil }
-//    defer {
-//      curPointer = curPointer.advanced(by: MemoryLayout<Element>.stride)
-//    }
-//    //TODO: specialize for Element: _BitwiseCopyable
-//    if _isPOD(Element.self) {
-//      return curPointer.loadUnaligned(as: Element.self)
-//    }
-//    return curPointer.load(as: Element.self)
-//  }
-//}
+extension StorageView.Iterator where Element: _BitwiseCopyable {
+
+  // This is the `IteratorProtocol` requirement, except that
+  // StorageView.Iterator does not conform to `Escapable`
+  public mutating func next() -> Element? {
+    guard curPointer < endPointer else { return nil }
+    defer {
+      curPointer = curPointer.advanced(by: MemoryLayout<Element>.stride)
+    }
+    return curPointer.loadUnaligned(as: Element.self)
+  }
+}
+
+#endif

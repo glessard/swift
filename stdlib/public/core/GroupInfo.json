@@ -200,6 +200,8 @@
   ],
   "StorageView": [
     "ContiguousStorage.swift",
+    "RawSpan.swift",
+    "RawSpanIndex.swift",
     "StorageView.swift",
     "StorageViewIndex.swift",
     "StorageViewIterator.swift"

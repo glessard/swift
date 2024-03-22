@@ -1,0 +1,18 @@
+#/bin/bash
+
+export BUILD_DIR=/Codage/swift-public/build/Ninja-ReleaseAssert/swift-macosx-arm64
+export DYLD_LIBRARY_PATH=${BUILD_DIR}/lib/swift/macosx
+
+export SDK=/Volumes/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/
+
+${BUILD_DIR}/bin/swiftc \
+  -sdk ${SDK} \
+  -resource-dir ${BUILD_DIR}/lib/swift \
+  -enable-experimental-feature BuiltinModule \
+  -enable-experimental-feature NoncopyableGenerics \
+  -enable-experimental-feature NonescapableTypes \
+  -Xfrontend -enable-experimental-associated-type-inference \
+  -Xfrontend -enable-experimental-lifetime-dependence-inference \
+  -Xfrontend -disable-experimental-parser-round-trip \
+  -Xllvm -enable-lifetime-dependence-diagnostics \
+  "${1}"

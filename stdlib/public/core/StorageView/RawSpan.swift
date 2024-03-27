@@ -22,7 +22,7 @@ public struct RawSpan: Copyable, ~Escapable {
     _unchecked start: Index,
     count: Int,
     owner: borrowing Owner
-  ) -> _borrow(owner) Self {
+  ) -> dependsOn(owner) Self {
     self._start = start
     self._count = count
     return self
@@ -39,7 +39,7 @@ extension RawSpan {
     start: Index,
     count: Int,
     owner: borrowing Owner
-  ) -> _borrow(owner) Self {
+  ) -> dependsOn(owner) Self {
     precondition(count >= 0, "Count must not be negative")
     self.init(_unchecked: start, count: count, owner: owner)
     return self
@@ -49,7 +49,7 @@ extension RawSpan {
   @inlinable @inline(__always)
   internal init<T: _BitwiseCopyable>(
     _ owner: borrowing StorageView<T>
-  ) -> _borrow(owner) Self {
+  ) -> dependsOn(owner) Self {
     let start = Index(
       allocation: owner.startIndex._allocation,
       rawValue: owner.startIndex._rawValue
@@ -244,7 +244,7 @@ extension RawSpan {
   @_alwaysEmitIntoClient
   borrowing public func withUnsafeBytes<E: Error, R: ~Copyable /*& ~Escapable*/>(
     _ body: (_ buffer: UnsafeRawBufferPointer) throws(E) -> R
-  ) throws(E) -> /*_borrow(self)*/ R {
+  ) throws(E) -> /*dependsOn(self)*/ R {
     let rawBuffer = UnsafeRawBufferPointer(
       start: count==0 ? nil : _start._rawValue,
       count: count
@@ -266,7 +266,7 @@ extension RawSpan {
 #if hasFeature(BitwiseCopyable)
   consuming public func view<T: _BitwiseCopyable>(
     as: T.Type
-  ) -> _consume(self) StorageView<T> {
+  ) -> dependsOn(self) StorageView<T> {
     let (c, r) = count.quotientAndRemainder(dividingBy: MemoryLayout<T>.stride)
     precondition(r == 0, "Returned span must contain whole number of T")
     return StorageView(
@@ -362,31 +362,31 @@ extension RawSpan {
 //MARK: one-sided slicing operations
 extension RawSpan {
 
-  consuming public func prefix(upTo index: Index) -> _consume(self) Self {
+  consuming public func prefix(upTo index: Index) -> dependsOn(self) Self {
     index == startIndex
     ? Self(_unchecked: _start, count: 0, owner: self)
     : prefix(through: index.advanced(by: -1))
   }
 
-  consuming public func prefix(through index: Index) -> _consume(self) Self {
+  consuming public func prefix(through index: Index) -> dependsOn(self) Self {
     boundsCheckPrecondition(index)
     let nc = distance(from: startIndex, to: index) &+ 1
     return Self(_unchecked: _start, count: nc, owner: self)
   }
 
-  consuming public func prefix(_ maxLength: Int) -> _consume(self) Self {
+  consuming public func prefix(_ maxLength: Int) -> dependsOn(self) Self {
     precondition(maxLength >= 0, "Can't have a prefix of negative length.")
     let nc = maxLength < count ? maxLength : count
     return Self(_unchecked: _start, count: nc, owner: self)
   }
 
-  consuming public func dropLast(_ k: Int = 1) -> _consume(self) Self {
+  consuming public func dropLast(_ k: Int = 1) -> dependsOn(self) Self {
     precondition(k >= 0, "Can't drop a negative number of elements.")
     let nc = k < count ? count&-k : 0
     return Self(_unchecked: _start, count: nc, owner: self)
   }
 
-  consuming public func suffix(from index: Index) -> _consume(self) Self {
+  consuming public func suffix(from index: Index) -> dependsOn(self) Self {
     if index == endIndex {
       return Self(_unchecked: index, count: 0, owner: self )
     }
@@ -395,14 +395,14 @@ extension RawSpan {
     return Self(_unchecked: index, count: nc, owner: self)
   }
 
-  consuming public func suffix(_ maxLength: Int) -> _consume(self) Self {
+  consuming public func suffix(_ maxLength: Int) -> dependsOn(self) Self {
     precondition(maxLength >= 0, "Can't have a suffix of negative length.")
     let nc = maxLength < count ? maxLength : count
     let newStart = _start.advanced(by: count&-nc)
     return Self(_unchecked: newStart, count: nc, owner: self)
   }
 
-  consuming public func dropFirst(_ k: Int = 1) -> _consume(self) Self {
+  consuming public func dropFirst(_ k: Int = 1) -> dependsOn(self) Self {
     precondition(k >= 0, "Can't drop a negative number of elements.")
     let dc = k < count ? k : count
     let newStart = _start.advanced(by: dc)

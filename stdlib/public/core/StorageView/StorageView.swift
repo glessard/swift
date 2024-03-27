@@ -24,7 +24,7 @@ public struct StorageView<Element/*: ~Copyable & ~Escapable*/>: Copyable, ~Escap
     _unchecked start: Index,
     count: Int,
     borrowing owner: borrowing Owner
-  ) -> _borrow(owner) Self {
+  ) -> dependsOn(owner) Self {
     self._start = start
     self._count = count
     return self
@@ -35,7 +35,7 @@ public struct StorageView<Element/*: ~Copyable & ~Escapable*/>: Copyable, ~Escap
     _unchecked start: Index,
     count: Int,
     consuming owner: consuming Owner
-  ) -> _consume(owner) Self {
+  ) -> dependsOn(owner) Self {
     self._start = start
     self._count = count
     return self
@@ -52,7 +52,7 @@ extension StorageView /*where Element: ~Copyable*/ /*& ~Escapable*/ {
     start: Index,
     count: Int,
     borrowing owner: borrowing Owner
-  ) -> _borrow(owner) Self {
+  ) -> dependsOn(owner) Self {
     precondition(count >= 0, "Count must not be negative")
     precondition(
       start.isAligned,
@@ -72,7 +72,7 @@ extension StorageView /*where Element: ~Copyable*/ /*& ~Escapable*/ {
     start: Index,
     count: Int,
     consuming owner: consuming Owner
-  ) -> _consume(owner) Self {
+  ) -> dependsOn(owner) Self {
     precondition(count >= 0, "Count must not be negative")
     precondition(
       start.isAligned,
@@ -87,7 +87,7 @@ extension StorageView /*where Element: ~Copyable*/ /*& ~Escapable*/ {
     unsafePointer: UnsafePointer<Element>,
     count: Int,
     owner: borrowing Owner
-  ) -> _borrow(owner) Self {
+  ) -> dependsOn(owner) Self {
     let start = Index(_rawStart: unsafePointer)
 #if NOTBOGUS
     self.init(start: start, count: count, owner: owner)
@@ -106,7 +106,7 @@ extension StorageView /*where Element: ~Copyable*/ /*& ~Escapable*/ {
   public init<Owner: ~Copyable & ~Escapable>(
     unsafeBufferPointer buffer: UnsafeBufferPointer<Element>,
     owner: borrowing Owner
-  ) -> _borrow(owner) Self {
+  ) -> dependsOn(owner) Self {
     guard let baseAddress = buffer.baseAddress else {
       fatalError("StorageView requires a non-nil base address")
     }
@@ -372,7 +372,7 @@ extension StorageView /*where Element: ~Copyable*/ {
     }
   }
 
-  consuming public func sub(consuming bounds: Range<Index>) -> _consume(self) Self {
+  consuming public func sub(consuming bounds: Range<Index>) -> dependsOn(self) Self {
     StorageView(
       start: bounds.lowerBound,
       count: bounds.count,
@@ -380,7 +380,7 @@ extension StorageView /*where Element: ~Copyable*/ {
     )
   }
 
-  borrowing public func sub(borrowing bounds: Range<Index>) -> _borrow(self) Self {
+  borrowing public func sub(borrowing bounds: Range<Index>) -> dependsOn(self) Self {
     StorageView(
       start: bounds.lowerBound,
       count: bounds.count,
@@ -598,8 +598,8 @@ extension StorageView /*where Element: ~Copyable*/ {
 //    Result: ~Copyable /*& ~Escapable*/,
 //    E: Error
 //  >(
-//    _ body: (UnsafeBufferPointer<Element>) throws(E) -> /*_borrow(0)*/ Result
-//  ) throws(E) -> /*_borrow(self)*/ Result {
+//    _ body: (UnsafeBufferPointer<Element>) throws(E) -> /*dependsOn(0)*/ Result
+//  ) throws(E) -> /*dependsOn(self)*/ Result {
 //    try _start._rawValue.withMemoryRebound(to: Element.self, capacity: count) {
 //      (pointer: UnsafePointer<Element>) throws(E) -> Result in
 //      try body(.init(start: pointer, count: count))
@@ -677,7 +677,7 @@ extension StorageView where Element: _BitwiseCopyable {
   /// - Returns: A new `StorageView` over elements of type `T`
   borrowing public func view<T: _BitwiseCopyable>(
     as: T.Type
-  ) -> _borrow(self) StorageView<T> {
+  ) -> dependsOn(self) StorageView<T> {
     let bc = count*MemoryLayout<Element>.stride
     let (nc, rem) = bc.quotientAndRemainder(dividingBy: MemoryLayout<T>.stride)
     precondition(rem == 0)
@@ -705,31 +705,31 @@ extension StorageView where Element: Copyable {
 //MARK: one-sided slicing operations
 extension StorageView /*where Element: ~Copyable*/ {
 
-//  borrowing public func prefix(upTo index: Index) -> _borrow(self) Self {
+//  borrowing public func prefix(upTo index: Index) -> dependsOn(self) Self {
 //    index == startIndex
 //    ? Self(_unchecked: _start, count: 0, borrowing: copy self)
 //    : prefix(through: index.advanced(by: -1))
 //  }
 
-  borrowing public func prefix(through index: Index) -> _borrow(self) Self {
+  borrowing public func prefix(through index: Index) -> dependsOn(self) Self {
     boundsCheckPrecondition(index)
     let nc = distance(from: startIndex, to: index) &+ 1
     return Self(_unchecked: _start, count: nc, borrowing: copy self)
   }
 
-  consuming public func prefix(_ maxLength: Int) -> _consume(self) Self {
+  consuming public func prefix(_ maxLength: Int) -> dependsOn(self) Self {
     precondition(maxLength >= 0, "Can't have a prefix of negative length.")
     let nc = maxLength < count ? maxLength : count
     return Self(_unchecked: _start, count: nc, consuming: self)
   }
 
-  borrowing public func dropLast(_ k: Int = 1) -> _borrow(self) Self {
+  borrowing public func dropLast(_ k: Int = 1) -> dependsOn(self) Self {
     precondition(k >= 0, "Can't drop a negative number of elements.")
     let nc = k < count ? count&-k : 0
     return Self(_unchecked: _start, count: nc, borrowing: copy self)
   }
 
-//  borrowing public func suffix(from index: Index) -> _borrow(self) Self {
+//  borrowing public func suffix(from index: Index) -> dependsOn(self) Self {
 //    if index == endIndex {
 //      return Self(_unchecked: index, count: 0, borrowing: copy self )
 //    }
@@ -738,14 +738,14 @@ extension StorageView /*where Element: ~Copyable*/ {
 //    return Self(_unchecked: index, count: nc, borrowing: copy self)
 //  }
 
-  borrowing public func suffix(_ maxLength: Int) -> _borrow(self) Self {
+  borrowing public func suffix(_ maxLength: Int) -> dependsOn(self) Self {
     precondition(maxLength >= 0, "Can't have a suffix of negative length.")
     let nc = maxLength < count ? maxLength : count
     let newStart = _start.advanced(by: count&-nc)
     return Self(_unchecked: newStart, count: nc, borrowing: copy self)
   }
 
-  borrowing public func dropFirst(_ k: Int = 1) -> _borrow(self) Self {
+  borrowing public func dropFirst(_ k: Int = 1) -> dependsOn(self) Self {
     precondition(k >= 0, "Can't drop a negative number of elements.")
     let dc = k < count ? k : count
     let newStart = _start.advanced(by: dc)

@@ -12,7 +12,7 @@
 
 #if hasFeature(NonescapableTypes) && hasFeature(BitwiseCopyable)
 
-extension RawSpan /*where Element: ~Copyable & ~Escapable*/ {
+extension RawSpan {
   @frozen
   public struct Index {
     @usableFromInline let _allocation: UnsafeRawPointer
@@ -38,16 +38,16 @@ extension RawSpan /*where Element: ~Copyable & ~Escapable*/ {
 @available(*, unavailable)
 extension RawSpan.Index: Sendable {}
 
-extension RawSpan.Index: Equatable /*where Element: ~Copyable & ~Escapable*/ {
+extension RawSpan.Index: Equatable {
   public static func == (lhs: Self, rhs: Self) -> Bool {
     // note: if we don't define this function, then `Strideable` will define it.
     (lhs._allocation == rhs._allocation) && (lhs._rawValue == rhs._rawValue)
   }
 }
 
-extension RawSpan.Index: Hashable /*where Element: ~Copyable & ~Escapable*/ {}
+extension RawSpan.Index: Hashable {}
 
-extension RawSpan.Index: Strideable /*where Element: ~Copyable*/ /*& ~Escapable*/ {
+extension RawSpan.Index: Strideable {
   public typealias Stride = Int
 
   @inlinable @inline(__always)
@@ -62,7 +62,7 @@ extension RawSpan.Index: Strideable /*where Element: ~Copyable*/ /*& ~Escapable*
   }
 }
 
-extension RawSpan.Index: Comparable /*where Element: ~Copyable*/ /*& ~Escapable*/ {
+extension RawSpan.Index: Comparable {
   @inlinable @inline(__always)
   public static func <(lhs: Self, rhs: Self) -> Bool {
     return lhs._rawValue < rhs._rawValue

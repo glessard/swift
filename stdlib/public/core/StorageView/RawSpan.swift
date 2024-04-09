@@ -25,7 +25,16 @@ public struct RawSpan: Copyable, ~Escapable {
   ) -> dependsOn(owner) Self {
     self._start = start
     self._count = count
-    return self
+  }
+
+  @inlinable @inline(__always)
+  internal init<Owner: ~Copyable & ~Escapable>(
+    _unchecked start: Index,
+    count: Int,
+    consuming owner: consuming Owner
+  ) -> dependsOn(owner) Self {
+    self._start = start
+    self._count = count
   }
 }
 
@@ -42,7 +51,6 @@ extension RawSpan {
   ) -> dependsOn(owner) Self {
     precondition(count >= 0, "Count must not be negative")
     self.init(_unchecked: start, count: count, owner: owner)
-    return self
   }
 
 #if hasFeature(BitwiseCopyable)
@@ -57,7 +65,6 @@ extension RawSpan {
     self.init(
       _unchecked: start, count: owner.count*MemoryLayout<T>.stride, owner: owner
     )
-    return self
   }
 #endif
 }
@@ -202,18 +209,23 @@ extension RawSpan {
   //FIXME: lifetime-dependent on self
   @_alwaysEmitIntoClient
   public subscript(offsets: Range<Int>) -> Self {
-    consuming get {
+    borrowing get {
       precondition(0 <= offsets.lowerBound && offsets.upperBound <= count)
-      return (copy self)[uncheckedOffsets: offsets]
+      return RawSpan(
+        _unchecked: index(startIndex, offsetBy: offsets.lowerBound),
+        count: offsets.count,
+        owner: self
+      )
+//      return (copy self)[uncheckedOffsets: offsets]
     }
   }
 
   //FIXME: lifetime-dependent on self
   @_alwaysEmitIntoClient
   public subscript(uncheckedOffsets offsets: Range<Int>) -> Self {
-    consuming get {
+    borrowing get {
       RawSpan(
-        start: index(startIndex, offsetBy: offsets.lowerBound),
+        _unchecked: index(startIndex, offsetBy: offsets.lowerBound),
         count: offsets.count,
         owner: self
       )
@@ -223,16 +235,16 @@ extension RawSpan {
   //FIXME: lifetime-dependent on self
   @_alwaysEmitIntoClient
   public subscript(offsets: some RangeExpression<Int>) -> Self {
-    consuming get {
-      (copy self)[offsets.relative(to: 0..<count)]
+    borrowing get {
+      self[offsets.relative(to: 0..<count)]
     }
   }
 
   //FIXME: lifetime-dependent on self
   @_alwaysEmitIntoClient
   public subscript(uncheckedOffsets offsets: some RangeExpression<Int>) -> Self {
-    consuming get {
-      (copy self)[uncheckedOffsets: offsets.relative(to: 0..<count)]
+    borrowing get {
+      self[uncheckedOffsets: offsets.relative(to: 0..<count)]
     }
   }
 }
@@ -242,7 +254,7 @@ extension RawSpan {
 
   //FIXME: mark closure parameter as non-escaping
   @_alwaysEmitIntoClient
-  borrowing public func withUnsafeBytes<E: Error, R: ~Copyable /*& ~Escapable*/>(
+  borrowing public func withUnsafeBytes<E: Error, R: ~Copyable/*& ~Escapable*/>(
     _ body: (_ buffer: UnsafeRawBufferPointer) throws(E) -> R
   ) throws(E) -> /*dependsOn(self)*/ R {
     let rawBuffer = UnsafeRawBufferPointer(

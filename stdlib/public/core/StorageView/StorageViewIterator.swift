@@ -12,16 +12,15 @@
 
 #if hasFeature(NonescapableTypes)
 
-extension StorageView /*where Element: ~Copyable & ~Escapable*/ {
+extension StorageView where Element: /*~*/Copyable /*& ~Escapable*/ {
   @frozen
   public struct Iterator: Copyable, ~Escapable {
-    private var curPointer: UnsafeRawPointer
+    var curPointer: UnsafeRawPointer
     let endPointer: UnsafeRawPointer
 
     init(owner: borrowing StorageView<Element>) -> dependsOn(owner) Self {
       self.curPointer = owner.startIndex._rawValue
       self.endPointer = owner.endIndex._rawValue
-      return self
     }
   }
 }

@@ -31,9 +31,11 @@ extension Array: ContiguousStorage {
         )
       }
       else {
-        fatalError()
-//        let a = ContiguousArray(copy self)
-//        yield a.storage
+        let a = ContiguousArray(copy self)
+        let s = StorageView(
+          unsafePointer: a._baseAddressIfContiguous!, count: count, owner: a
+        )
+        yield s
       }
     }
   }
@@ -42,14 +44,9 @@ extension Array: ContiguousStorage {
 extension ContiguousArray: ContiguousStorage {
   public var storage: StorageView<Element> {
     borrowing _read {
-      if let a = _baseAddressIfContiguous {
-        yield StorageView(
-          unsafePointer: a, count: count, owner: copy self
-        )
-      }
-      else {
-        fatalError()
-      }
+      yield StorageView(
+        unsafePointer: _baseAddressIfContiguous!, count: count, owner: copy self
+      )
     }
   }
 }

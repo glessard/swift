@@ -7668,7 +7668,7 @@ void AttributeChecker::visitForwardedToCAttr(ForwardedToCAttr *attr) {
   // ... or the protocol Self type.
   auto *outerDC = param->getDeclContext()->getParent();
   if (outerDC->getSelfProtocolDecl() &&
-      type->isEqual(outerDC->getProtocolSelfType())) {
+      type->isEqual(outerDC->getSelfInterfaceType())) {
     return;
   }
 

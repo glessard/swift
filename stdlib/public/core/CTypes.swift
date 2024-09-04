@@ -347,8 +347,8 @@ extension CVaListPointer: Sendable { }
 /// `dest..<dest + size` should not overlap.
 @inlinable
 internal func _memcpy(
-  dest destination: UnsafeMutableRawPointer,
-  src: UnsafeRawPointer,
+  @_forwardedToC dest destination: UnsafeMutableRawPointer,
+  @_forwardedToC src: UnsafeRawPointer,
   size: UInt
 ) {
   let dest = destination._rawValue

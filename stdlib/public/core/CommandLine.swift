@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2017 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2024 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -14,9 +14,10 @@ import SwiftShims
 
 #if SWIFT_STDLIB_HAS_COMMANDLINE
 
-@_silgen_name("_swift_stdlib_getUnsafeArgvArgc")
-internal func _swift_stdlib_getUnsafeArgvArgc(_: UnsafeMutablePointer<Int32>)
-  -> UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>
+@_extern(c, "_swift_stdlib_getUnsafeArgvArgc")
+internal func _swift_stdlib_getUnsafeArgvArgc(
+  @_forwardedToC _: UnsafeMutablePointer<Int32>
+) -> UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>
 
 /// Command-line arguments for the current process.
 @frozen // namespace

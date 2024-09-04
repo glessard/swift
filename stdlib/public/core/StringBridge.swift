@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2018 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2024 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -45,13 +45,15 @@ internal typealias _CocoaString = AnyObject
   func _fastCharacterContents() -> UnsafePointer<UInt16>?
 
   @objc(getBytes:maxLength:usedLength:encoding:options:range:remainingRange:)
-  func getBytes(_ buffer: UnsafeMutableRawPointer?,
-   maxLength maxBufferCount: Int,
-  usedLength usedBufferCount: UnsafeMutablePointer<Int>?,
+  func getBytes(
+    _ buffer: UnsafeMutableRawPointer?,
+    maxLength maxBufferCount: Int,
+    @_forwardedToC usedLength usedBufferCount: UnsafeMutablePointer<Int>?,
     encoding: UInt,
-     options: UInt,
-       range: _SwiftNSRange,
-       remaining leftover: UnsafeMutablePointer<_SwiftNSRange>?) -> Int8
+    options: UInt,
+    range: _SwiftNSRange,
+    @_forwardedToC remaining leftover: UnsafeMutablePointer<_SwiftNSRange>?
+  ) -> Int8
 
   @objc(compare:options:range:locale:)
   func compare(_ string: _CocoaString,

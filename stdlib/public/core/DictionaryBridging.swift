@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2018 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2024 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -362,10 +362,9 @@ final internal class _SwiftDeferredNSDictionary<Key: Hashable, Value>
     for bucket in native.hashTable {
       let key = _key(at: bucket, bridgedKeys: bridgedKeys)
       let value = _value(at: bucket, bridgedValues: bridgedValues)
-      block(
-        Unmanaged.passUnretained(key),
-        Unmanaged.passUnretained(value),
-        &stop)
+      withUnsafeMutablePointer(to: &stop) {
+        block(.passUnretained(key), .passUnretained(value), $0)
+      }
       if stop != 0 { return }
     }
   }

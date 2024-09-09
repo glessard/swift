@@ -149,13 +149,14 @@ extension RawSpan {
   /// - Parameters:
   ///   - span: An existing `Span<T>`, which will define both this
   ///           `RawSpan`'s lifetime and the memory it represents.
-  @inlinable @inline(__always)
-  public init<T: BitwiseCopyable>(_ span: borrowing Span<T>) -> dependsOn(immortal) Self {
-    self.init(
-      _unchecked: UnsafeRawPointer(span._start),
-      byteCount: span.count * MemoryLayout<T>.stride
-    )
-  }
+#warning("uncomment this once Span exists")
+//  @inlinable @inline(__always)
+//  public init<T: BitwiseCopyable>(_ span: borrowing Span<T>) -> dependsOn(immortal) Self {
+//    self.init(
+//      _unchecked: UnsafeRawPointer(span._start),
+//      byteCount: span.count * MemoryLayout<T>.stride
+//    )
+//  }
 }
 
 extension RawSpan {
@@ -400,12 +401,13 @@ extension RawSpan {
   /// - Parameters:
   ///   - type: The type as which to view the bytes of this span.
   /// - Returns: A typed span viewing these bytes as instances of `T`.
-  @_alwaysEmitIntoClient
-  public func unsafeView<T: BitwiseCopyable>(
-    as type: T.Type
-  ) -> Span<T> {
-    Span(_unsafeStart: _start, byteCount: byteCount)
-  }
+#warning("uncomment this once Span exists")
+//  @_alwaysEmitIntoClient
+//  public func unsafeView<T: BitwiseCopyable>(
+//    as type: T.Type
+//  ) -> Span<T> {
+//    Span(_unsafeStart: _start, byteCount: byteCount)
+//  }
 }
 
 //MARK: load

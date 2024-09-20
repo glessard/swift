@@ -1145,7 +1145,7 @@ extension ContiguousArray {
   ///   valid only for the duration of the method's execution.
   /// - Returns: The return value, if any, of the `body` closure parameter.
   @_alwaysEmitIntoClient
-  public func withUnsafeBufferPointer<R, E>(
+  public func withUnsafeBufferPointer<E: Error, R: ~Copyable>(
     _ body: (UnsafeBufferPointer<Element>) throws(E) -> R
   ) throws(E) -> R {
     return try _buffer.withUnsafeBufferPointer(body)

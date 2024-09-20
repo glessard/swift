@@ -1605,7 +1605,7 @@ extension Array {
   ///   valid only for the duration of the method's execution.
   /// - Returns: The return value, if any, of the `body` closure parameter.
   @_alwaysEmitIntoClient
-  public func withUnsafeBufferPointer<R, E>(
+  public func withUnsafeBufferPointer<E: Error, R: ~Copyable>(
     _ body: (UnsafeBufferPointer<Element>) throws(E) -> R
   ) throws(E) -> R {
     return try _buffer.withUnsafeBufferPointer(body)
@@ -1685,7 +1685,7 @@ extension Array {
   // caller such that we can combine the partial apply with the apply in this
   // function saving on allocating a closure context. This becomes unnecessary
   // once we allocate noescape closures on the stack.
-  public mutating func withUnsafeMutableBufferPointer<R, E>(
+  public mutating func withUnsafeMutableBufferPointer<E: Error, R: ~Copyable>(
     _ body: (inout UnsafeMutableBufferPointer<Element>) throws(E) -> R
   ) throws(E) -> R {
     _makeMutableAndUnique()
@@ -1854,6 +1854,16 @@ extension Array: Hashable where Element: Hashable {
 }
 
 extension Array {
+  // Superseded by the typed-throws version of this function, but retained
+  // for ABI reasons.
+  @_disfavoredOverload
+  @usableFromInline
+  mutating func withUnsafeMutableBytes<R>(
+    _ body: (UnsafeMutableRawBufferPointer) throws -> R
+  ) rethrows -> R {
+    try self.withUnsafeMutableBufferPointer { try body(.init($0)) }
+  }
+
   /// Calls the given closure with a pointer to the underlying bytes of the
   /// array's mutable contiguous storage.
   ///
@@ -1894,13 +1904,23 @@ extension Array {
   ///   The argument is valid only for the duration of the closure's
   ///   execution.
   /// - Returns: The return value, if any, of the `body` closure parameter.
-  @inlinable
-  public mutating func withUnsafeMutableBytes<R>(
-    _ body: (UnsafeMutableRawBufferPointer) throws -> R
-  ) rethrows -> R {
-    return try self.withUnsafeMutableBufferPointer {
-      return try body(UnsafeMutableRawBufferPointer($0))
+  @_alwaysEmitIntoClient
+  public mutating func withUnsafeMutableBytes<E: Error, R: ~Copyable>(
+    _ body: (UnsafeMutableRawBufferPointer) throws(E) -> R
+  ) throws(E) -> R {
+    try self.withUnsafeMutableBufferPointer { buffer throws(E) -> R in
+      try body(UnsafeMutableRawBufferPointer(buffer))
     }
+  }
+
+  // Superseded by the typed-throws version of this function, but retained
+  // for ABI reasons.
+  @_disfavoredOverload
+  @usableFromInline
+  func withUnsafeBytes<R>(
+    _ body: (UnsafeRawBufferPointer) throws -> R
+  ) rethrows -> R {
+    try self.withUnsafeBufferPointer { try body(UnsafeRawBufferPointer($0)) }
   }
 
   /// Calls the given closure with a pointer to the underlying bytes of the
@@ -1931,11 +1951,11 @@ extension Array {
   ///   argument is valid only for the duration of the closure's execution.
   /// - Returns: The return value, if any, of the `body` closure parameter.
   @inlinable
-  public func withUnsafeBytes<R>(
-    _ body: (UnsafeRawBufferPointer) throws -> R
-  ) rethrows -> R {
-    return try self.withUnsafeBufferPointer {
-      try body(UnsafeRawBufferPointer($0))
+  public func withUnsafeBytes<E: Error, R: ~Copyable>(
+    _ body: (UnsafeRawBufferPointer) throws(E) -> R
+  ) throws(E) -> R {
+    try self.withUnsafeBufferPointer { buffer throws(E) -> R in
+      try body(UnsafeRawBufferPointer(buffer))
     }
   }
 }

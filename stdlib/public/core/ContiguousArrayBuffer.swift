@@ -459,7 +459,7 @@ internal struct _ContiguousArrayBuffer<Element>: _ArrayBufferProtocol {
   /// Call `body(p)`, where `p` is an `UnsafeBufferPointer` over the
   /// underlying contiguous storage.
   @_alwaysEmitIntoClient
-  internal func withUnsafeBufferPointer<R, E>(
+  internal func withUnsafeBufferPointer<E: Error, R: ~Copyable>(
     _ body: (UnsafeBufferPointer<Element>) throws(E) -> R
   ) throws(E) -> R {
     defer { _fixLifetime(self) }

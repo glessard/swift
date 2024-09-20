@@ -125,13 +125,13 @@ internal func _isStackAllocationSafe(byteCount: Int, alignment: Int) -> Bool {
 /// `withUnsafeTemporaryAllocation()`.
 @_alwaysEmitIntoClient @_transparent
 internal func _withUnsafeTemporaryAllocation<
-  T: ~Copyable, R: ~Copyable
+  T: ~Copyable, E: Error, R: ~Copyable
 >(
   of type: T.Type,
   capacity: Int,
   alignment: Int,
-  _ body: (Builtin.RawPointer) throws -> R
-) rethrows -> R {
+  _ body: (Builtin.RawPointer) throws(E) -> R
+) throws(E) -> R {
   // How many bytes do we need to allocate?
   let byteCount = _byteCountForTemporaryAllocation(of: type, capacity: capacity)
 
@@ -210,11 +210,11 @@ internal func _withUnprotectedUnsafeTemporaryAllocation<
 }
 
 @_alwaysEmitIntoClient @_transparent
-internal func _fallBackToHeapAllocation<R: ~Copyable>(
+internal func _fallBackToHeapAllocation<E: Error, R: ~Copyable>(
   byteCount: Int,
   alignment: Int,
-  _ body: (Builtin.RawPointer) throws -> R
-) rethrows -> R {
+  _ body: (Builtin.RawPointer) throws(E) -> R
+) throws(E) -> R {
   let buffer = UnsafeMutableRawPointer.allocate(
     byteCount: byteCount,
     alignment: alignment
@@ -259,16 +259,16 @@ internal func _fallBackToHeapAllocation<R: ~Copyable>(
 /// the buffer) must not escape. It will be deallocated when `body` returns and
 /// cannot be used afterward.
 @_alwaysEmitIntoClient @_transparent
-public func withUnsafeTemporaryAllocation<R: ~Copyable>(
+public func withUnsafeTemporaryAllocation<E: Error, R: ~Copyable>(
   byteCount: Int,
   alignment: Int,
-  _ body: (UnsafeMutableRawBufferPointer) throws -> R
-) rethrows -> R {
+  _ body: (UnsafeMutableRawBufferPointer) throws(E) -> R
+) throws(E) -> R {
   return try _withUnsafeTemporaryAllocation(
     of: Int8.self,
     capacity: byteCount,
     alignment: alignment
-  ) { pointer in
+  ) { pointer throws(E) in
     let buffer = UnsafeMutableRawBufferPointer(
       start: .init(pointer),
       count: byteCount
@@ -334,17 +334,17 @@ public func _withUnprotectedUnsafeTemporaryAllocation<R: ~Copyable>(
 /// cannot be used afterward.
 @_alwaysEmitIntoClient @_transparent
 public func withUnsafeTemporaryAllocation<
-  T: ~Copyable,R: ~Copyable
+  T: ~Copyable, E: Error, R: ~Copyable
 >(
   of type: T.Type,
   capacity: Int,
-  _ body: (UnsafeMutableBufferPointer<T>) throws -> R
-) rethrows -> R {
+  _ body: (UnsafeMutableBufferPointer<T>) throws(E) -> R
+) throws(E) -> R {
   return try _withUnsafeTemporaryAllocation(
     of: type,
     capacity: capacity,
     alignment: MemoryLayout<T>.alignment
-  ) { pointer in
+  ) { pointer throws(E) in
     Builtin.bindMemory(pointer, capacity._builtinWordValue, type)
     let buffer = UnsafeMutableBufferPointer<T>(
       start: .init(pointer),

@@ -266,7 +266,7 @@ extension RawSpan {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(_ bounds: Range<Int>) -> Self {
+  public func _extracting(_ bounds: Range<Int>) -> Self {
     _precondition(boundsContain(bounds))
     return _extracting(unchecked: bounds)
   }
@@ -294,7 +294,7 @@ extension RawSpan {
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
   @unsafe
-  @usableFromInline func _extracting(unchecked bounds: Range<Int>) -> Self {
+  public func _extracting(unchecked bounds: Range<Int>) -> Self {
     RawSpan(
       _unchecked: _pointer?.advanced(by: bounds.lowerBound),
       byteCount: bounds.count
@@ -322,7 +322,7 @@ extension RawSpan {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(_ bounds: some RangeExpression<Int>) -> Self {
+  public func _extracting(_ bounds: some RangeExpression<Int>) -> Self {
     _extracting(bounds.relative(to: _byteOffsets))
   }
 
@@ -349,7 +349,7 @@ extension RawSpan {
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
   @unsafe
-  @usableFromInline func _extracting(
+  public func _extracting(
     unchecked bounds: some RangeExpression<Int>
   ) -> Self {
     _extracting(unchecked: bounds.relative(to: _byteOffsets))
@@ -372,7 +372,7 @@ extension RawSpan {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(_: UnboundedRange) -> Self {
+  public func _extracting(_: UnboundedRange) -> Self {
     self
   }
 }
@@ -613,7 +613,7 @@ extension RawSpan {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(first maxLength: Int) -> Self {
+  public func _extracting(first maxLength: Int) -> Self {
     _precondition(maxLength >= 0, "Can't have a prefix of negative length.")
     let newCount = min(maxLength, byteCount)
     return Self(_unchecked: _pointer, byteCount: newCount)
@@ -640,7 +640,7 @@ extension RawSpan {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(droppingLast k: Int) -> Self {
+  public func _extracting(droppingLast k: Int) -> Self {
     _precondition(k >= 0, "Can't drop a negative number of elements.")
     let dc = min(k, byteCount)
     return Self(_unchecked: _pointer, byteCount: byteCount&-dc)
@@ -668,7 +668,7 @@ extension RawSpan {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(last maxLength: Int) -> Self {
+  public func _extracting(last maxLength: Int) -> Self {
     _precondition(maxLength >= 0, "Can't have a suffix of negative length.")
     let newCount = min(maxLength, byteCount)
     let newStart = _pointer?.advanced(by: byteCount&-newCount)
@@ -696,7 +696,7 @@ extension RawSpan {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(droppingFirst k: Int) -> Self {
+  public func _extracting(droppingFirst k: Int) -> Self {
     _precondition(k >= 0, "Can't drop a negative number of elements.")
     let dc = min(k, byteCount)
     let newStart = _pointer?.advanced(by: dc)

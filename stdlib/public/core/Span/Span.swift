@@ -499,7 +499,7 @@ extension Span where Element: ~Copyable {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(_ bounds: Range<Int>) -> Self {
+  public func _extracting(_ bounds: Range<Int>) -> Self {
     _precondition(boundsContain(bounds))
     return _extracting(unchecked: bounds)
   }
@@ -527,7 +527,7 @@ extension Span where Element: ~Copyable {
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
   @unsafe
-  @usableFromInline func _extracting(unchecked bounds: Range<Int>) -> Self {
+  public func _extracting(unchecked bounds: Range<Int>) -> Self {
     Span(
       _unchecked: _pointer?.advanced(by: bounds.lowerBound*MemoryLayout<Element>.stride),
       count: bounds.count
@@ -555,7 +555,7 @@ extension Span where Element: ~Copyable {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(_ bounds: some RangeExpression<Int>) -> Self {
+  public func _extracting(_ bounds: some RangeExpression<Int>) -> Self {
     _extracting(bounds.relative(to: _indices))
   }
 
@@ -582,7 +582,7 @@ extension Span where Element: ~Copyable {
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
   @unsafe
-  @usableFromInline func _extracting(
+  public func _extracting(
     uncheckedBounds bounds: some RangeExpression<Int>
   ) -> Self {
     _extracting(unchecked: bounds.relative(to: _indices))
@@ -605,7 +605,7 @@ extension Span where Element: ~Copyable {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(_: UnboundedRange) -> Self {
+  public func _extracting(_: UnboundedRange) -> Self {
     self
   }
 }
@@ -748,7 +748,7 @@ extension Span where Element: ~Copyable {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(first maxLength: Int) -> Self {
+  public func _extracting(first maxLength: Int) -> Self {
     _precondition(maxLength >= 0, "Can't have a prefix of negative length.")
     let newCount = min(maxLength, count)
     return Self(_unchecked: _pointer, count: newCount)
@@ -775,7 +775,7 @@ extension Span where Element: ~Copyable {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(droppingLast k: Int) -> Self {
+  public func _extracting(droppingLast k: Int) -> Self {
     _precondition(k >= 0, "Can't drop a negative number of elements.")
     let droppedCount = min(k, count)
     return Self(_unchecked: _pointer, count: count&-droppedCount)
@@ -803,7 +803,7 @@ extension Span where Element: ~Copyable {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(last maxLength: Int) -> Self {
+  public func _extracting(last maxLength: Int) -> Self {
     _precondition(maxLength >= 0, "Can't have a suffix of negative length.")
     let newCount = min(maxLength, count)
     let newStart = _pointer?.advanced(by: (count&-newCount)*MemoryLayout<Element>.stride)
@@ -831,7 +831,7 @@ extension Span where Element: ~Copyable {
   ///
   /// - Complexity: O(1)
   @_disallowFeatureSuppression(NonescapableTypes)
-  @usableFromInline func _extracting(droppingFirst k: Int) -> Self {
+  public func _extracting(droppingFirst k: Int) -> Self {
     _precondition(k >= 0, "Can't drop a negative number of elements.")
     let droppedCount = min(k, count)
     let newStart = _pointer?.advanced(by: droppedCount*MemoryLayout<Element>.stride)

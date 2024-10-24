@@ -28,7 +28,7 @@ public struct Span<Element: ~Copyable & ~Escapable>
 
   @_disallowFeatureSuppression(NonescapableTypes)
   @_alwaysEmitIntoClient
-  @lifetime(immortal)
+  @lifetime(pointer)
   internal init(
     _unchecked pointer: UnsafeRawPointer?,
     count: Int
@@ -57,7 +57,7 @@ extension Span where Element: ~Copyable {
   ///            the newly created `Span`.
   @_disallowFeatureSuppression(NonescapableTypes)
   @_alwaysEmitIntoClient
-  @lifetime(immortal)
+  @lifetime(buffer)
   public init(
     _unsafeElements buffer: UnsafeBufferPointer<Element>
   ) {
@@ -80,7 +80,7 @@ extension Span where Element: ~Copyable {
   ///            the newly created `Span`.
   @_disallowFeatureSuppression(NonescapableTypes)
   @_alwaysEmitIntoClient
-  @lifetime(immortal)
+  @lifetime(buffer)
   public init(
     _unsafeElements buffer: UnsafeMutableBufferPointer<Element>
   ) {
@@ -100,13 +100,13 @@ extension Span where Element: ~Copyable {
   ///            the newly created `Span`.
   @_disallowFeatureSuppression(NonescapableTypes)
   @_alwaysEmitIntoClient
-  @lifetime(immortal)
+  @lifetime(pointer)
   public init(
-    _unsafeStart start: UnsafePointer<Element>,
+    _unsafeStart pointer: UnsafePointer<Element>,
     count: Int
   ) {
     _precondition(count >= 0, "Count must not be negative")
-    self.init(_unsafeElements: .init(start: start, count: count))
+    self.init(_unsafeElements: .init(start: pointer, count: count))
   }
 }
 
@@ -125,7 +125,7 @@ extension Span {
   ///            the newly created `Span`.
   @_disallowFeatureSuppression(NonescapableTypes)
   @_alwaysEmitIntoClient
-  @lifetime(immortal)
+  @lifetime(buffer)
   public init(
     _unsafeElements buffer: Slice<UnsafeBufferPointer<Element>>
   ) {
@@ -143,7 +143,7 @@ extension Span {
   ///            the newly created `Span`.
   @_disallowFeatureSuppression(NonescapableTypes)
   @_alwaysEmitIntoClient
-  @lifetime(immortal)
+  @lifetime(buffer)
   public init(
     _unsafeElements buffer: Slice<UnsafeMutableBufferPointer<Element>>
   ) {
@@ -171,7 +171,7 @@ extension Span where Element: BitwiseCopyable {
   ///            the newly created `Span`.
   @_disallowFeatureSuppression(NonescapableTypes)
   @_alwaysEmitIntoClient
-  @lifetime(immortal)
+  @lifetime(buffer)
   public init(
     _unsafeBytes buffer: UnsafeRawBufferPointer
   ) {
@@ -204,7 +204,7 @@ extension Span where Element: BitwiseCopyable {
   ///            the newly created `Span`.
   @_disallowFeatureSuppression(NonescapableTypes)
   @_alwaysEmitIntoClient
-  @lifetime(immortal)
+  @lifetime(buffer)
   public init(
     _unsafeBytes buffer: UnsafeMutableRawBufferPointer
   ) {
@@ -228,7 +228,7 @@ extension Span where Element: BitwiseCopyable {
   ///            the newly created `Span`.
   @_disallowFeatureSuppression(NonescapableTypes)
   @_alwaysEmitIntoClient
-  @lifetime(immortal)
+  @lifetime(pointer)
   public init(
     _unsafeStart pointer: UnsafeRawPointer,
     byteCount: Int
@@ -253,7 +253,7 @@ extension Span where Element: BitwiseCopyable {
   ///            the newly created `Span`.
   @_disallowFeatureSuppression(NonescapableTypes)
   @_alwaysEmitIntoClient
-  @lifetime(immortal)
+  @lifetime(buffer)
   public init(
     _unsafeBytes buffer: Slice<UnsafeRawBufferPointer>
   ) {
@@ -276,7 +276,7 @@ extension Span where Element: BitwiseCopyable {
   ///            the newly created `Span`.
   @_disallowFeatureSuppression(NonescapableTypes)
   @_alwaysEmitIntoClient
-  @lifetime(immortal)
+  @lifetime(buffer)
   public init(
     _unsafeBytes buffer: Slice<UnsafeMutableRawBufferPointer>
   ) {

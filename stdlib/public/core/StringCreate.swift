@@ -358,7 +358,7 @@ extension String {
           // transcoding error: clean up and return nil
           fallthrough
         }
-        if buffer.count < written + utf8.count {
+        if written + utf8.count > buffer.count &- 1 {
           let newCapacity = buffer.count + (buffer.count >> 1)
           let copy: UnsafeMutableBufferPointer<UInt8>
           copy = UnsafeMutableBufferPointer.allocate(capacity: newCapacity)
@@ -380,6 +380,8 @@ extension String {
         buffer.deallocate()
         return nil
       case .emptyInput:
+        precondition(written < buffer.count &- 1)
+        buffer.initializeElement(at: written, to: 0)
         break transcodingLoop
       }
     }

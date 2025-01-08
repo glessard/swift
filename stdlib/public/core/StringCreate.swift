@@ -327,6 +327,8 @@ extension String {
     _ input: UnsafeBufferPointer<Encoding.CodeUnit>,
     as encoding: Encoding.Type
   ) -> String? {
+    guard input.count > 0 else { return "" }
+
     if encoding.CodeUnit.self == UInt8.self {
       let bytes = _identityCast(input, to: UnsafeBufferPointer<UInt8>.self)
       if encoding.self == UTF8.self {
@@ -341,7 +343,7 @@ extension String {
     // slow-path
     var isASCII = true
     var buffer: UnsafeMutableBufferPointer<UInt8>
-    buffer = UnsafeMutableBufferPointer.allocate(capacity: input.count*3)
+    buffer = .allocate(capacity: 2 + input.count * 3)
     var written = buffer.startIndex
 
     var parser = Encoding.ForwardParser()

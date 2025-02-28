@@ -976,6 +976,16 @@ Added: _$ss15ContiguousArrayV11mutableSpans07MutableD0VyxGvr
 Added: _$ss11InlineArrayVsRi__rlE11mutableSpans07MutableD0Vyq_Gvr
 Added: _$ss15CollectionOfOneV11mutableSpans07MutableE0VyxGvr
 
+// OutputSpan
+Added: _$ss10OutputSpanVMa
+Added: _$ss10OutputSpanVMn
+Added: _$ss10OutputSpanVsRi_zrlE12_initializedSivM
+Added: _$ss10OutputSpanVsRi_zrlE12_initializedSivg
+Added: _$ss10OutputSpanVsRi_zrlE12_initializedSivs
+Added: _$ss10OutputSpanVsRi_zrlE8_pointerSvSgvg
+Added: _$ss10OutputSpanVsRi_zrlE8capacitySivg
+Added: _$ss10OutputSpanVsRi_zrlEfD
+
 // _SwiftifyInfo enum for _SwiftifyImports macro
 Added: _$ss13_SwiftifyExprO5paramyABSicABmFWC
 Added: _$ss13_SwiftifyExprO6returnyA2BmFWC

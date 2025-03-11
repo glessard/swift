@@ -123,6 +123,7 @@ extension _Pointer /*: Equatable */ {
   ///   - rhs: Another pointer.
   /// - Returns: `true` if `lhs` and `rhs` reference the same memory address;
   ///   otherwise, `false`.
+  @safe
   @_transparent
   public static func == (lhs: Self, rhs: Self) -> Bool {
     return Bool(Builtin.cmp_eq_RawPointer(lhs._rawValue, rhs._rawValue))
@@ -136,6 +137,7 @@ extension _Pointer /*: Equatable */ {
   ///   - rhs: Another pointer.
   /// - Returns: `true` if `lhs` and `rhs` reference the same memory address;
   ///            otherwise, `false`.
+  @safe
   @inlinable
   @_alwaysEmitIntoClient
   public static func == <Other: _Pointer>(lhs: Self, rhs: Other) -> Bool {
@@ -150,6 +152,7 @@ extension _Pointer /*: Equatable */ {
   ///   - rhs: Another pointer.
   /// - Returns: `true` if `lhs` and `rhs` reference different memory addresses;
   ///            otherwise, `false`.
+  @safe
   @inlinable
   @_alwaysEmitIntoClient
   public static func != <Other: _Pointer>(lhs: Self, rhs: Other) -> Bool {

@@ -233,7 +233,7 @@ extension UnsafeMutableRawPointer {
     from src: UnsafeRawPointer,
     discriminator: UInt64
   ) {
-    if unsafe src == UnsafeRawPointer(self) { return }
+    if src == UnsafeRawPointer(self) { return }
 
     let srcDiscriminator = unsafe _PtrAuth.blend(pointer: src,
                                           discriminator: discriminator)

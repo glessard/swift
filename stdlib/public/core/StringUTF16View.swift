@@ -803,7 +803,7 @@ extension String.UTF16View {
         let byte = unsafe readPtr.load(as: UInt8.self)
         let len = _utf8ScalarLength(byte)
         utf16Count &-= len == 4 ? 2 : 1
-        if unsafe readPtr == initialReadPtr {
+        if readPtr == initialReadPtr {
           //if we backed up all the way and didn't hit a non-continuation, then
           //we don't have any complete scalars, and we should bail.
           return 0

@@ -166,7 +166,7 @@ extension UnsafeRawBufferPointer.Iterator: @unsafe IteratorProtocol, @unsafe Seq
     // pointers.
     _debugPrecondition(unsafe _end != nil)
     let end = unsafe _end._unsafelyUnwrappedUnchecked
-    if unsafe position == end { return nil }
+    if position == end { return nil }
     _debugPrecondition(unsafe position < end)
     let result = unsafe position.load(as: UInt8.self)
     // Validly constructed buffer pointers also have an _end that is strictly

@@ -1304,14 +1304,18 @@ extension ArraySlice {
   public var mutableSpan: MutableSpan<Element> {
     @lifetime(/*inout*/borrow self)
     @_alwaysEmitIntoClient
-    mutating get {
+    mutating _read {
       _makeMutableAndUnique()
-      // NOTE: We don't have the ability to schedule a call to
-      //       ContiguousArrayBuffer.endCOWMutation().
+      // NOTE: We must schedule a call to endMutation() with a coroutine.
       //       rdar://146785284 (lifetime analysis for end of mutation)
-      let (pointer, count) = unsafe (_buffer.firstElementAddress, _buffer.count)
-      let span = unsafe MutableSpan(_unsafeStart: pointer, count: count)
-      return unsafe _overrideLifetime(span, mutating: &self)
+      let span = unsafe MutableSpan(
+        _unsafeStart: _buffer.firstElementAddress, count: _buffer.count
+      )
+      defer {
+        _endMutation()
+        _fixLifetime(self)
+      }
+      yield unsafe _overrideLifetime(span, mutating: &self)
     }
   }
 

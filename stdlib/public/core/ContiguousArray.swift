@@ -1246,15 +1246,20 @@ extension ContiguousArray {
   public var mutableSpan: MutableSpan<Element> {
     @lifetime(/*inout*/borrow self)
     @_alwaysEmitIntoClient
-    mutating get {
+    mutating _read {
       _makeMutableAndUnique()
-      // NOTE: We don't have the ability to schedule a call to
-      //       ContiguousArrayBuffer.endCOWMutation().
+      // NOTE: We must schedule a call to endMutation() with a coroutine.
       //       rdar://146785284 (lifetime analysis for end of mutation)
       let pointer = unsafe _buffer.firstElementAddress
       let count = _buffer.mutableCount
-      let span = unsafe MutableSpan(_unsafeStart: pointer, count: count)
-      return unsafe _overrideLifetime(span, mutating: &self)
+      let span = unsafe MutableSpan(
+        _unsafeStart: _buffer.firstElementAddress, count: _buffer.mutableCount
+      )
+      defer {
+        _endMutation()
+        _fixLifetime(self)
+      }
+      yield unsafe _overrideLifetime(span, mutating: &self)
     }
   }
 

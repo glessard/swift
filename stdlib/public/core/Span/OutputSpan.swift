@@ -440,6 +440,31 @@ extension OutputSpan where Element: ~Copyable {
     discard self
     return count
   }
+
+  /// Consume the output span (relinquishing its control over the buffer it is
+  /// addressing), and return the number of initialized elements in it.
+  ///
+  /// This method is designed to be invoked in the same context that created the
+  /// output span, when it is time to commit the contents of the updated buffer
+  /// back into the construct that it came from.
+  ///
+  /// The context that created the output span is expected to remember what
+  /// memory region the span is addressing. This consuming method expects to
+  /// receive a copy of the same buffer pointer as a (loose) proof of ownership.
+  ///
+  /// - Parameter buffer: The buffer that the `OutputSpan` is expected to
+  ///      address. This must be the same buffer as the one used to originally
+  ///      initialize the `OutputSpan` instance.
+  /// - Returns: The number of initialized elements in the same buffer, as
+  ///      tracked by the consumed `OutputSpan` instance.
+  @unsafe
+  @_alwaysEmitIntoClient
+  public consuming func finalize(
+    for buffer: Slice<UnsafeMutableBufferPointer<Element>>
+  ) -> Int {
+    //finalize(buffer.extracting(...)) // FIXME: Add this please please please
+    finalize(UnsafeMutableBufferPointer(rebasing: buffer))
+  }
 }
 
 @available(SwiftStdlib 6.2, *)

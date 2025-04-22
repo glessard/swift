@@ -1013,11 +1013,6 @@ extension UnsafeMutablePointer {
   public func update(from source: UnsafePointer<Pointee>, count: Int) {
     _debugPrecondition(
       count >= 0, "UnsafeMutablePointer.update with negative count")
-    if _isPOD(Pointee.self) {
-      UnsafeRawPointer(self).copyMemory(
-        from: source, byteCount: count * MemoryLayout<Element>.stride)
-      return
-    }
     if unsafe UnsafePointer(self) < source || UnsafePointer(self) >= source + count {
       // assign forward from a disjoint or following overlapping range.
       Builtin.assignCopyArrayFrontToBack(

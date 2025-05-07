@@ -192,13 +192,11 @@ suite.test("initialize buffer from Span")
 
   var a = Allocation(of: 48, Int.self)
   let c = 24
+
+  let array = Array(0..<c)
+  let span = array.span
   a.initialize {
-    os in
-    let array = Array(0..<c)
-    array.withUnsafeBufferPointer {
-      let span = Span(_unsafeElements: $0)
-      os.append(fromContentsOf: span)
-    }
+    $0.append(fromContentsOf: span)
   }
   a.withSpan {
     expectEqual($0.count, c)

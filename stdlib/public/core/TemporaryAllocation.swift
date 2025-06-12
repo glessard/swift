@@ -125,13 +125,13 @@ internal func _isStackAllocationSafe(byteCount: Int, alignment: Int) -> Bool {
 /// `withUnsafeTemporaryAllocation()`.
 @_alwaysEmitIntoClient @_transparent
 internal func _withUnsafeTemporaryAllocation<
-  T: ~Copyable, R: ~Copyable
+  T: ~Copyable, E: Error, R: ~Copyable
 >(
   of type: T.Type,
   capacity: Int,
   alignment: Int,
-  _ body: (Builtin.RawPointer) throws -> R
-) rethrows -> R {
+  _ body: (Builtin.RawPointer) throws(E) -> R
+) throws(E) -> R {
   // How many bytes do we need to allocate?
   let byteCount = _byteCountForTemporaryAllocation(of: type, capacity: capacity)
 
@@ -154,7 +154,7 @@ internal func _withUnsafeTemporaryAllocation<
   // The multiple calls to Builtin.stackDealloc() are because defer { } produces
   // a child function at the SIL layer and that conflicts with the verifier's
   // idea of a stack allocation's lifetime.
-  do {
+  do throws(E) {
     result = try body(stackAddress)
     Builtin.stackDealloc(stackAddress)
     return result
@@ -170,13 +170,13 @@ internal func _withUnsafeTemporaryAllocation<
 
 @_alwaysEmitIntoClient @_transparent
 internal func _withUnprotectedUnsafeTemporaryAllocation<
-  T: ~Copyable, R: ~Copyable
+  T: ~Copyable, E: Error, R: ~Copyable
 >(
   of type: T.Type,
   capacity: Int,
   alignment: Int,
-  _ body: (Builtin.RawPointer) throws -> R
-) rethrows -> R {
+  _ body: (Builtin.RawPointer) throws(E) -> R
+) throws(E) -> R {
   // How many bytes do we need to allocate?
   let byteCount = _byteCountForTemporaryAllocation(of: type, capacity: capacity)
 
@@ -198,7 +198,7 @@ internal func _withUnprotectedUnsafeTemporaryAllocation<
   // The multiple calls to Builtin.stackDealloc() are because defer { } produces
   // a child function at the SIL layer and that conflicts with the verifier's
   // idea of a stack allocation's lifetime.
-  do {
+  do throws(E) {
     result = try body(stackAddress)
     Builtin.stackDealloc(stackAddress)
     return result
@@ -210,11 +210,11 @@ internal func _withUnprotectedUnsafeTemporaryAllocation<
 }
 
 @_alwaysEmitIntoClient @_transparent
-internal func _fallBackToHeapAllocation<R: ~Copyable>(
+internal func _fallBackToHeapAllocation<E: Error, R: ~Copyable>(
   byteCount: Int,
   alignment: Int,
-  _ body: (Builtin.RawPointer) throws -> R
-) rethrows -> R {
+  _ body: (Builtin.RawPointer) throws(E) -> R
+) throws(E) -> R {
   let buffer = UnsafeMutableRawPointer.allocate(
     byteCount: byteCount,
     alignment: alignment

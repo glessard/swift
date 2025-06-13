@@ -66,6 +66,16 @@ extension MutableSpan where Element: ~Copyable {
 
   @unsafe
   @_alwaysEmitIntoClient
+  @lifetime(borrow elements)
+  internal init(
+    _uncheckedAndRenamed elements: UnsafeMutableBufferPointer<Element>
+  ) {
+    unsafe _pointer = .init(elements.baseAddress)
+    _count = elements.count
+  }
+
+  @unsafe
+  @_alwaysEmitIntoClient
   @lifetime(borrow buffer)
   public init(
     _unsafeElements buffer: UnsafeMutableBufferPointer<Element>
@@ -75,7 +85,7 @@ extension MutableSpan where Element: ~Copyable {
         (MemoryLayout<Element>.alignment &- 1)) == 0),
       "baseAddress must be properly aligned to access Element"
     )
-    let ms = unsafe MutableSpan<Element>(_unchecked: buffer)
+    let ms = unsafe MutableSpan<Element>(_uncheckedAndRenamed: buffer)
     self = unsafe _overrideLifetime(ms, borrowing: buffer)
   }
 

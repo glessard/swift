@@ -55,7 +55,8 @@ extension MutableSpan: @unchecked Sendable where Element: Sendable {}
 extension MutableSpan where Element: ~Copyable {
 
   @unsafe
-  @_alwaysEmitIntoClient
+  @_unsafeNonescapableResult
+  @usableFromInline
   @lifetime(borrow elements)
   internal init(
     _unchecked elements: UnsafeMutableBufferPointer<Element>

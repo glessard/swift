@@ -704,13 +704,31 @@ extension MutableSpan where Element: ~Copyable {
   /// - Complexity: O(1)
   @_alwaysEmitIntoClient
   @lifetime(&self)
-  mutating public func extracting(_ bounds: Range<Index>) -> Self {
+  mutating public func _mutatingExtracting(_ bounds: Range<Index>) -> Self {
     _precondition(
       UInt(bitPattern: bounds.lowerBound) <= UInt(bitPattern: _count) &&
       UInt(bitPattern: bounds.upperBound) <= UInt(bitPattern: _count),
       "Index range out of bounds"
     )
-    return unsafe extracting(unchecked: bounds)
+    return unsafe _mutatingExtracting(unchecked: bounds)
+  }
+
+  @available(*, deprecated, renamed: "_mutatingExtracting(_:)")
+  @_alwaysEmitIntoClient
+  @lifetime(&self)
+  mutating public func extracting(_ bounds: Range<Index>) -> Self {
+    _mutatingExtracting(bounds)
+  }
+
+  @_alwaysEmitIntoClient
+  @lifetime(copy self)
+  consuming public func _consumingExtracting(_ bounds: Range<Index>) -> Self {
+    _precondition(
+      UInt(bitPattern: bounds.lowerBound) <= UInt(bitPattern: _count) &&
+      UInt(bitPattern: bounds.upperBound) <= UInt(bitPattern: _count),
+      "Index range out of bounds"
+    )
+    return unsafe _consumingExtracting(unchecked: bounds)
   }
 
   /// Constructs a new span over the items within the supplied range of
@@ -731,13 +749,31 @@ extension MutableSpan where Element: ~Copyable {
   @unsafe
   @_alwaysEmitIntoClient
   @lifetime(&self)
-  mutating public func extracting(unchecked bounds: Range<Index>) -> Self {
+  mutating public func _mutatingExtracting(unchecked bounds: Range<Index>) -> Self {
     let delta = bounds.lowerBound &* MemoryLayout<Element>.stride
     let newStart = unsafe _pointer?.advanced(by: delta)
     let newSpan = unsafe Self(_unchecked: newStart, count: bounds.count)
     return unsafe _overrideLifetime(newSpan, mutating: &self)
   }
 
+  @unsafe
+  @available(*, deprecated, renamed: "_mutatingExtracting(unchecked:)")
+  @_alwaysEmitIntoClient
+  @lifetime(&self)
+  mutating public func extracting(unchecked bounds: Range<Index>) -> Self {
+    unsafe _mutatingExtracting(unchecked: bounds)
+  }
+
+  @unsafe
+  @_alwaysEmitIntoClient
+  @lifetime(copy self)
+  consuming public func _consumingExtracting(unchecked bounds: Range<Index>) -> Self {
+    let delta = bounds.lowerBound &* MemoryLayout<Element>.stride
+    let newStart = unsafe _pointer?.advanced(by: delta)
+    let newSpan = unsafe Self(_unchecked: newStart, count: bounds.count)
+    return unsafe _overrideLifetime(newSpan, copying: self)
+  }
+
   /// Constructs a new span over the items within the supplied range of
   /// positions within this span.
   ///
@@ -753,10 +789,27 @@ extension MutableSpan where Element: ~Copyable {
   /// - Complexity: O(1)
   @_alwaysEmitIntoClient
   @lifetime(&self)
+  mutating public func _mutatingExtracting(
+    _ bounds: some RangeExpression<Index>
+  ) -> Self {
+    _mutatingExtracting(bounds.relative(to: indices))
+  }
+
+  @available(*, deprecated, renamed: "_mutatingExtracting(_:)")
+  @_alwaysEmitIntoClient
+  @lifetime(&self)
   mutating public func extracting(
     _ bounds: some RangeExpression<Index>
   ) -> Self {
-    extracting(bounds.relative(to: indices))
+    _mutatingExtracting(bounds)
+  }
+
+  @_alwaysEmitIntoClient
+  @lifetime(copy self)
+  consuming public func _consumingExtracting(
+    _ bounds: some RangeExpression<Index>
+  ) -> Self {
+    _consumingExtracting(bounds.relative(to: indices))
   }
 
   /// Constructs a new span over the items within the supplied range of
@@ -777,13 +830,35 @@ extension MutableSpan where Element: ~Copyable {
   @unsafe
   @_alwaysEmitIntoClient
   @lifetime(&self)
-  mutating public func extracting(
+  mutating public func _mutatingExtracting(
     unchecked bounds: ClosedRange<Index>
   ) -> Self {
     let range = unsafe Range(
-      _uncheckedBounds: (bounds.lowerBound, bounds.upperBound&+1)
+      _uncheckedBounds: (bounds.lowerBound, bounds.upperBound + 1)
     )
-    return unsafe extracting(unchecked: range)
+    return unsafe _mutatingExtracting(unchecked: range)
+  }
+
+  @unsafe
+  @available(*, deprecated, renamed: "_mutatingExtracting(unchecked:)")
+  @_alwaysEmitIntoClient
+  @lifetime(&self)
+  mutating public func extracting(
+    unchecked bounds: ClosedRange<Index>
+  ) -> Self {
+    unsafe _mutatingExtracting(unchecked: bounds)
+  }
+
+  @unsafe
+  @_alwaysEmitIntoClient
+  @lifetime(copy self)
+  consuming public func _consumingExtracting(
+    unchecked bounds: ClosedRange<Index>
+  ) -> Self {
+    let range = unsafe Range(
+      _uncheckedBounds: (bounds.lowerBound, bounds.upperBound + 1)
+    )
+    return unsafe _consumingExtracting(unchecked: range)
   }
 
   /// Constructs a new span over all the items of this span.
@@ -797,9 +872,22 @@ extension MutableSpan where Element: ~Copyable {
   /// - Complexity: O(1)
   @_alwaysEmitIntoClient
   @lifetime(&self)
-  mutating public func extracting(_: UnboundedRange) -> Self {
+  mutating public func _mutatingExtracting(_: UnboundedRange) -> Self {
     let newSpan = unsafe Self(_unchecked: _pointer, count: _count)
     return unsafe _overrideLifetime(newSpan, mutating: &self)
+  }
+
+  @available(*, deprecated, renamed: "_mutatingExtracting(_:)")
+  @_alwaysEmitIntoClient
+  @lifetime(&self)
+  mutating public func extracting(_: UnboundedRange) -> Self {
+    _mutatingExtracting(...)
+  }
+
+  @_alwaysEmitIntoClient
+  @lifetime(copy self)
+  consuming public func _consumingExtracting(_: UnboundedRange) -> Self {
+    self
   }
 }
 
@@ -825,12 +913,32 @@ extension MutableSpan where Element: ~Copyable {
   /// - Complexity: O(1)
   @_alwaysEmitIntoClient
   @lifetime(&self)
-  mutating public func extracting(first maxLength: Int) -> Self {
+  mutating public func _mutatingExtracting(first maxLength: Int) -> Self {
 #if compiler(>=5.3) && hasFeature(SendableCompletionHandlers)
     _precondition(maxLength >= 0, "Can't have a prefix of negative length")
     let newCount = min(maxLength, count)
     let newSpan = unsafe Self(_unchecked: _pointer, count: newCount)
     return unsafe _overrideLifetime(newSpan, mutating: &self)
+#else
+    fatalError("Unsupported compiler")
+#endif
+  }
+
+  @available(*, deprecated, renamed: "_mutatingExtracting(first:)")
+  @_alwaysEmitIntoClient
+  @lifetime(&self)
+  mutating public func extracting(first maxLength: Int) -> Self {
+    _mutatingExtracting(first: maxLength)
+  }
+
+  @_alwaysEmitIntoClient
+  @lifetime(copy self)
+  consuming public func _consumingExtracting(first maxLength: Int) -> Self {
+#if compiler(>=5.3) && hasFeature(SendableCompletionHandlers)
+    _precondition(maxLength >= 0, "Can't have a prefix of negative length")
+    let newCount = min(maxLength, count)
+    let newSpan = unsafe Self(_unchecked: _pointer, count: newCount)
+    return unsafe _overrideLifetime(newSpan, copying: self)
 #else
     fatalError("Unsupported compiler")
 #endif
@@ -852,13 +960,34 @@ extension MutableSpan where Element: ~Copyable {
   /// - Complexity: O(1)
   @_alwaysEmitIntoClient
   @lifetime(&self)
-  mutating public func extracting(droppingLast k: Int) -> Self {
+  mutating public func _mutatingExtracting(droppingLast k: Int) -> Self {
 #if compiler(>=5.3) && hasFeature(SendableCompletionHandlers)
     _precondition(k >= 0, "Can't drop a negative number of elements")
     let droppedCount = min(k, count)
     let newCount = count &- droppedCount
     let newSpan = unsafe Self(_unchecked: _pointer, count: newCount)
     return unsafe _overrideLifetime(newSpan, mutating: &self)
+#else
+    fatalError("Unsupported compiler")
+#endif
+  }
+
+  @available(*, deprecated, renamed: "_mutatingExtracting(droppingLast:)")
+  @_alwaysEmitIntoClient
+  @lifetime(&self)
+  mutating public func extracting(droppingLast k: Int) -> Self {
+    _mutatingExtracting(droppingLast: k)
+  }
+
+  @_alwaysEmitIntoClient
+  @lifetime(copy self)
+  consuming public func _consumingExtracting(droppingLast k: Int) -> Self {
+#if compiler(>=5.3) && hasFeature(SendableCompletionHandlers)
+    _precondition(k >= 0, "Can't drop a negative number of elements")
+    let droppedCount = min(k, count)
+    let newCount = count &- droppedCount
+    let newSpan = unsafe Self(_unchecked: _pointer, count: newCount)
+    return unsafe _overrideLifetime(newSpan, copying: self)
 #else
     fatalError("Unsupported compiler")
 #endif
@@ -881,7 +1010,7 @@ extension MutableSpan where Element: ~Copyable {
   /// - Complexity: O(1)
   @_alwaysEmitIntoClient
   @lifetime(&self)
-  mutating public func extracting(last maxLength: Int) -> Self {
+  mutating public func _mutatingExtracting(last maxLength: Int) -> Self {
 #if compiler(>=5.3) && hasFeature(SendableCompletionHandlers)
     _precondition(maxLength >= 0, "Can't have a suffix of negative length")
     let newCount = min(maxLength, count)
@@ -889,6 +1018,28 @@ extension MutableSpan where Element: ~Copyable {
     let newStart = unsafe _pointer?.advanced(by: offset)
     let newSpan = unsafe Self(_unchecked: newStart, count: newCount)
     return unsafe _overrideLifetime(newSpan, mutating: &self)
+#else
+    fatalError("Unsupported compiler")
+#endif
+  }
+
+  @available(*, deprecated, renamed: "_mutatingExtracting(last:)")
+  @_alwaysEmitIntoClient
+  @lifetime(&self)
+  mutating public func extracting(last maxLength: Int) -> Self {
+    _mutatingExtracting(last: maxLength)
+  }
+
+  @_alwaysEmitIntoClient
+  @lifetime(copy self)
+  consuming public func _consumingExtracting(last maxLength: Int) -> Self {
+#if compiler(>=5.3) && hasFeature(SendableCompletionHandlers)
+    _precondition(maxLength >= 0, "Can't have a suffix of negative length")
+    let newCount = min(maxLength, count)
+    let offset = (count &- newCount) * MemoryLayout<Element>.stride
+    let newStart = unsafe _pointer?.advanced(by: offset)
+    let newSpan = unsafe Self(_unchecked: newStart, count: newCount)
+    return unsafe _overrideLifetime(newSpan, copying: self)
 #else
     fatalError("Unsupported compiler")
 #endif
@@ -910,7 +1061,7 @@ extension MutableSpan where Element: ~Copyable {
   /// - Complexity: O(1)
   @_alwaysEmitIntoClient
   @lifetime(&self)
-  mutating public func extracting(droppingFirst k: Int) -> Self {
+  mutating public func _mutatingExtracting(droppingFirst k: Int) -> Self {
 #if compiler(>=5.3) && hasFeature(SendableCompletionHandlers)
     _precondition(k >= 0, "Can't drop a negative number of elements")
     let droppedCount = min(k, count)
@@ -919,6 +1070,29 @@ extension MutableSpan where Element: ~Copyable {
     let newCount = count &- droppedCount
     let newSpan = unsafe Self(_unchecked: newStart, count: newCount)
     return unsafe _overrideLifetime(newSpan, mutating: &self)
+#else
+    fatalError("Unsupported compiler")
+#endif
+  }
+
+  @available(*, deprecated, renamed: "_mutatingExtracting(droppingFirst:)")
+  @_alwaysEmitIntoClient
+  @lifetime(&self)
+  mutating public func extracting(droppingFirst k: Int) -> Self {
+    _mutatingExtracting(droppingFirst: k)
+  }
+
+  @_alwaysEmitIntoClient
+  @lifetime(copy self)
+  consuming public func _consumingExtracting(droppingFirst k: Int) -> Self {
+#if compiler(>=5.3) && hasFeature(SendableCompletionHandlers)
+    _precondition(k >= 0, "Can't drop a negative number of elements")
+    let droppedCount = min(k, count)
+    let offset = droppedCount * MemoryLayout<Element>.stride
+    let newStart = unsafe _pointer?.advanced(by: offset)
+    let newCount = count &- droppedCount
+    let newSpan = unsafe Self(_unchecked: newStart, count: newCount)
+    return unsafe _overrideLifetime(newSpan, copying: self)
 #else
     fatalError("Unsupported compiler")
 #endif

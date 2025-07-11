@@ -1509,15 +1509,34 @@ extension Array {
 }
 
 extension Array {
-  /// Implementation for Array(unsafeUninitializedCapacity:initializingWith:)
+  /// Implementation preserved (for ABI reasons) for:
+  /// Array(unsafeUninitializedCapacity:initializingWith:)
   /// and ContiguousArray(unsafeUninitializedCapacity:initializingWith:)
-  @inlinable
+  @_spi(SwiftStdlibLegacyABI)
+  @usableFromInline
   internal init(
     _unsafeUninitializedCapacity: Int,
     initializingWith initializer: (
       _ buffer: inout UnsafeMutableBufferPointer<Element>,
       _ initializedCount: inout Int) throws -> Void
   ) rethrows {
+    try unsafe self.init(
+      _unsafeUninitializedCapacity: _unsafeUninitializedCapacity,
+      initializingWithTypedThrowsInitializer: initializer
+    )
+  }
+
+  /// Implementation for:
+  /// Array(unsafeUninitializedCapacity:initializingWith:)
+  /// and ContiguousArray(unsafeUninitializedCapacity:initializingWith:)
+  @_alwaysEmitIntoClient
+  internal init<E: Error>(
+    _unsafeUninitializedCapacity: Int,
+    initializingWithTypedThrowsInitializer initializer: (
+      _ buffer: inout UnsafeMutableBufferPointer<Element>,
+      _ initializedCount: inout Int
+    ) throws(E) -> Void
+  ) throws(E) {
     var firstElementAddress: UnsafeMutablePointer<Element>
     unsafe (self, firstElementAddress) =
       unsafe Array._allocateUninitialized(_unsafeUninitializedCapacity)
@@ -1567,18 +1586,19 @@ extension Array {
   ///         which begins as zero. Set `initializedCount` to the number of
   ///         elements you initialize.
   @_alwaysEmitIntoClient @inlinable
-  public init(
+  public init<E: Error>(
     unsafeUninitializedCapacity: Int,
     initializingWith initializer: (
       _ buffer: inout UnsafeMutableBufferPointer<Element>,
-      _ initializedCount: inout Int) throws -> Void
-  ) rethrows {
+      _ initializedCount: inout Int
+    ) throws(E) -> Void
+  ) throws(E) {
     self = try unsafe Array(
       _unsafeUninitializedCapacity: unsafeUninitializedCapacity,
-      initializingWith: initializer)
+      initializingWithTypedThrowsInitializer: initializer
+    )
   }
 
-  //FIXME: typed throws
   /// Creates an array with the specified capacity, then calls the given
   /// closure with an OutputSpan covering the array's uninitialized memory.
   ///
@@ -1595,15 +1615,15 @@ extension Array {
   ///         for the specified number of elements.
   @_alwaysEmitIntoClient
   @available(SwiftStdlib 6.2, *)
-  public init(
+  public init<E: Error>(
     capacity: Int,
     initializingWith initializer: (
       _ span: inout OutputSpan<Element>
-    ) throws -> Void
-  ) rethrows {
+    ) throws(E) -> Void
+  ) throws(E) {
     try unsafe self.init(
-      unsafeUninitializedCapacity: capacity,
-      initializingWith: { (buffer, count) in
+      _unsafeUninitializedCapacity: capacity,
+      initializingWithTypedThrowsInitializer: { (buffer, count) throws(E) in
         var output = unsafe OutputSpan(buffer: buffer, initializedCount: 0)
         try initializer(&output)
         count = unsafe output.finalize(for: buffer)
@@ -1613,6 +1633,7 @@ extension Array {
 
   // Superseded by the typed-throws version of this function, but retained
   // for ABI reasons.
+  @_spi(SwiftStdlibLegacyABI) @available(swift, obsoleted: 1)
   @usableFromInline
   @_disfavoredOverload
   func withUnsafeBufferPointer<R>(

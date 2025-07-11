@@ -1105,27 +1105,26 @@ extension ContiguousArray {
   ///         which begins as zero. Set `initializedCount` to the number of
   ///         elements you initialize.
   @_alwaysEmitIntoClient @inlinable
-  public init(
+  public init<E>(
     unsafeUninitializedCapacity: Int,
     initializingWith initializer: (
       _ buffer: inout UnsafeMutableBufferPointer<Element>,
-      _ initializedCount: inout Int) throws -> Void
-  ) rethrows {
+      _ initializedCount: inout Int) throws(E) -> Void
+  ) throws(E) {
     self = try unsafe ContiguousArray(Array(
       _unsafeUninitializedCapacity: unsafeUninitializedCapacity,
-      initializingWith: initializer))
+      initializingWithTypedThrowsInitializer: initializer))
   }
 
-  //FIXME: typed throws
   @_alwaysEmitIntoClient
   @available(SwiftStdlib 6.2, *)
-  public init(
+  public init<E: Error>(
     capacity: Int,
-    initializingWith initializer: (inout OutputSpan<Element>) throws -> Void
-  ) rethrows {
+    initializingWith initializer: (inout OutputSpan<Element>) throws(E) -> Void
+  ) throws(E) {
     try unsafe self.init(
       unsafeUninitializedCapacity: capacity,
-      initializingWith: { (buffer, count) in
+      initializingWith: { (buffer, count) throws(E) in
         var output = unsafe OutputSpan(buffer: buffer, initializedCount: 0)
         try initializer(&output)
         count = unsafe output.finalize(for: buffer)
@@ -1135,6 +1134,7 @@ extension ContiguousArray {
 
   // Superseded by the typed-throws version of this function, but retained
   // for ABI reasons.
+  @_spi(SwiftStdlibLegacyABI) @available(swift, obsoleted: 1)
   @usableFromInline
   @_disfavoredOverload
   func withUnsafeBufferPointer<R>(

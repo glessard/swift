@@ -656,10 +656,10 @@ extension String {
   }
 
   //FIXME: typed throws
-  @_alwaysEmitIntoClient
   @available(SwiftStdlib 6.2, *)
+  @_alwaysEmitIntoClient
   public init(
-    capacity: Int,
+    repairingUTF8WithCapacity capacity: Int,
     initializingUTF8With initializer: (
       inout OutputSpan<UTF8.CodeUnit>
     ) throws -> Void
@@ -679,9 +679,10 @@ extension String {
   //FIXME: typed throws
   //FIXME: take advantage of UTF8Span, then make public
   @available(SwiftStdlib 6.2, *)
+  @_alwaysEmitIntoClient
   internal init?(
-    capacity: Int,
-    initializingValidUTF8With initializer: (
+    validatingUTF8WithCapacity capacity: Int,
+    initializingUTF8With initializer: (
       inout OutputSpan<UTF8.CodeUnit>
     ) throws -> Void
   ) rethrows {
@@ -693,14 +694,8 @@ extension String {
           buffer: buffer, initializedCount: 0
         )
         try initializer(&output)
-        unsafe output.span.withUnsafeBufferPointer {
-          switch unsafe validateUTF8($0) {
-          case .error:
-            valid = false
-          case .success:
-            valid = true
-          }
-        }
+        let utf8 = UTF8Span(validating: output.span) {
+        valid = (utf8 != nil)
         guard valid else { return 0 }
         return unsafe output.finalize(for: buffer)
       }
@@ -719,6 +714,33 @@ extension String {
       _ buffer: UnsafeMutableBufferPointer<UInt8>
     ) throws -> Int
   ) rethrows {
+    if _fastPath(capacity <= _SmallString.capacity) {
+      let smol = try unsafe _SmallString(initializingUTF8With: {
+        try unsafe initializer(.init(start: $0.baseAddress, count: capacity))
+      })
+      // Fast case where we fit in a _SmallString and don't need UTF8 validation
+      if _fastPath(smol.isASCII) {
+        self = String(_StringGuts(smol))
+      } else {
+        // We succeeded in making a _SmallString, but may need to repair UTF8
+        self = smol.withUTF8 { unsafe String._fromUTF8Repairing($0).result }
+      }
+      return
+    }
+
+    self = try unsafe String._fromLargeUTF8Repairing(
+      uninitializedCapacity: capacity,
+      initializingWith: initializer)
+  }
+
+  @available(SwiftStdlib 6.2, *)
+  @_alwaysEmitIntoClient
+  internal init<E: Error>(
+    _uninitializedCapacity capacity: Int,
+    initializingUTF8WithTypedThrowsInitializer initializer: (
+      _ buffer: UnsafeMutableBufferPointer<UInt8>
+    ) throws(E) -> Int
+  ) throws(E) {
     if _fastPath(capacity <= _SmallString.capacity) {
       let smol = try unsafe _SmallString(initializingUTF8With: {
         try unsafe initializer(.init(start: $0.baseAddress, count: capacity))

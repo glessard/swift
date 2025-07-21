@@ -315,6 +315,49 @@ suite.test("update(repeating:)")
   expectEqual(a.allSatisfy({ $0.id == .max }), true)
 }
 
+suite.test("update(fromContentsOf: some Collection)")
+.require(.stdlib_6_2).code {
+  guard #available(macOS 26, *) else { return }
+
+  let capacity = 8
+  var a = Array(repeating: ID(id: .max), count: capacity)
+  expectEqual(a.allSatisfy({ $0.id == .max }), true)
+  a.withUnsafeMutableBufferPointer {
+    let emptyPrefix = $0.prefix(0)
+    var span = MutableSpan(_unsafeElements: emptyPrefix)
+    var updated = span.update(fromContentsOf: [])
+    expectEqual(updated, 0)
+
+    updated = span.update(fromContentsOf: AnyCollection([]))
+    expectEqual(updated, 0)
+
+    span = MutableSpan(_unsafeElements: $0)
+    let elements = (0..<capacity).map(ID.init(id:))
+    updated = span.update(fromContentsOf: AnyCollection(elements))
+    expectEqual(updated, capacity)
+  }
+  expectEqual(a.map(\.id).elementsEqual(0..<capacity), true)
+}
+
+suite.test("update(fromContentsOf: Span)")
+.require(.stdlib_6_2).code {
+  guard #available(macOS 26, *) else { return }
+
+
+  let capacity = 8
+  var a = Array(repeating: ID(id: .max), count: capacity)
+  expectEqual(a.allSatisfy({ $0.id == .max }), true)
+  a.withUnsafeMutableBufferPointer {
+    var span = MutableSpan(_unsafeElements: $0)
+    let elements = (0..<capacity).map(ID.init(id:))
+    elements.withUnsafeBufferPointer {
+      let idSpan = $0.span
+      let updated = span.update(fromContentsOf: idSpan)
+      expectEqual(updated, capacity)
+    }
+  }
+}
+
 suite.test("span property")
 .skip(.custom(
   { if #available(SwiftStdlib 6.2, *) { false } else { true } },

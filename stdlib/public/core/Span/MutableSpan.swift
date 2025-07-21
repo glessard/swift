@@ -426,6 +426,64 @@ extension MutableSpan {
       unsafe $0.update(repeating: repeatedValue, count: count)
     }
   }
+
+  @_spi_available(macOS 26, iOS 26, watchOS 26, tvOS 26, visionOS 26, *)
+  @_alwaysEmitIntoClient
+  @lifetime(self: copy self)
+  public mutating func update(
+    from elements: inout some IteratorProtocol<Element>
+  ) -> Index {
+    var index = 0
+    while index < _count {
+      guard let element = elements.next() else { break }
+      unsafe self[unchecked: index] = element
+      index &+= 1
+    }
+    return index
+  }
+
+  @_spi_available(macOS 26, iOS 26, watchOS 26, tvOS 26, visionOS 26, *)
+  @_alwaysEmitIntoClient
+  @lifetime(self: copy self)
+  public mutating func update(
+    fromContentsOf source: some Collection<Element>
+  ) -> Index {
+    let updated = source.withContiguousStorageIfAvailable {
+      self.update(fromContentsOf: unsafe Span(_unsafeElements: $0))
+    }
+    if let updated {
+      return updated
+    }
+
+    //TODO: use _copyContents here
+
+    var iterator = source.makeIterator()
+    let index = update(from: &iterator)
+    _precondition(
+      iterator.next() == nil,
+      "destination buffer view cannot contain every element from source."
+    )
+    return index
+  }
+
+  @_spi_available(macOS 26, iOS 26, watchOS 26, tvOS 26, visionOS 26, *)
+  @_alwaysEmitIntoClient
+  @lifetime(self: copy self)
+  public mutating func update(fromContentsOf source: Span<Element>) -> Index {
+    guard !source.isEmpty else { return 0 }
+    _precondition(
+      source.count <= self.count,
+      "destination span cannot contain every element from source."
+    )
+    unsafe _start().withMemoryRebound(
+      to: Element.self, capacity: source.count
+    ) { dest in
+      unsafe source.withUnsafeBufferPointer {
+        unsafe dest.update(from: $0.baseAddress!, count: $0.count)
+      }
+    }
+    return source.count
+  }
 }
 
 // MARK: sub-spans

@@ -281,6 +281,26 @@ suite.test("storeBytes(of:as:)")
   expectEqual(a[0].bigEndian & 0xffff, 0xffff)
 }
 
+suite.test("update(fromContentsOf:) (contiguous memory)")
+.require(.stdlib_6_2).code {
+  guard #available(macOS 26, *) else { return }
+
+  let capacity = 8
+  var a = Array(repeating: Int.max, count: capacity)
+  expectEqual(a.allSatisfy({ $0 == .max }), true)
+
+  a.withUnsafeMutableBytes {
+    var bytes = $0.mutableBytes
+
+    let array = Array(repeating: Int.min, count: capacity)
+    array.withUnsafeBytes {
+      let updated = bytes.update(fromContentsOf: $0.bytes)
+      expectEqual(updated, capacity*MemoryLayout<Int>.stride)
+    }
+  }
+  expectEqual(a.allSatisfy({ $0 == Int.min }), true)
+}
+
 suite.test("_mutatingExtracting()")
 .skip(.custom(
   { if #available(SwiftStdlib 6.2, *) { false } else { true } },

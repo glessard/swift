@@ -360,6 +360,32 @@ extension MutableRawSpan {
   }
 }
 
+// FIXME: The functions in this extension crash the SIL optimizer when built inside
+// the stub. But these declarations don't generate a public symbol anyway.
+#if !SPAN_COMPATIBILITY_STUB
+@available(SwiftCompatibilitySpan 5.0, *)
+@_originallyDefinedIn(module: "Swift;CompatibilitySpan", SwiftCompatibilitySpan 6.2)
+extension MutableRawSpan {
+
+  @_spi_available(macOS 26, iOS 26, watchOS 26, tvOS 26, visionOS 26, *)
+  @_alwaysEmitIntoClient
+  @lifetime(self: copy self)
+  public mutating func update(
+    fromContentsOf source: RawSpan
+  ) -> Int {
+    _precondition(
+      source.byteCount <= self.byteCount,
+      "destination span cannot contain every byte from source."
+    )
+    if source.byteCount == 0 { return 0 }
+    unsafe source.withUnsafeBytes {
+      unsafe _start().copyMemory(from: $0.baseAddress!, byteCount: $0.count)
+    }
+    return source.byteCount
+  }
+}
+#endif // !SPAN_COMPATIBILITY_STUB
+
 // MARK: sub-spans
 @available(SwiftCompatibilitySpan 5.0, *)
 @_originallyDefinedIn(module: "Swift;CompatibilitySpan", SwiftCompatibilitySpan 6.2)

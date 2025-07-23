@@ -676,6 +676,7 @@ function(_compile_swift_files
   endif()
 
   list(APPEND swift_flags "-Werror" "StrictMemorySafety")
+  list(APPEND swift_flags "-Werror" "UnnecessaryUnsafe")
 
   if (SWIFT_STDLIB_ENABLE_SIL_OPAQUE_VALUES)
     list(APPEND swift_flags "-Xfrontend" "-enable-sil-opaque-values")

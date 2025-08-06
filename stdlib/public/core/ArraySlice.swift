@@ -1003,6 +1003,64 @@ extension ArraySlice: RangeReplaceableCollection {
       : newCount)
   }
 
+  /// Grows the array to have enough capacity for the specified number of
+  /// elements, then calls the closure with an OutputSpan covering the array's
+  /// uninitialized memory.
+  ///
+  /// Inside the closure, initialize elements by appending to `span`. It
+  /// ensures safety by keeping track of the initialization state of the memory
+  /// At the end of the closure, `span`'s `count` elements will have been
+  /// appended to the array.
+  ///
+  /// - Parameters:
+  ///   - addingCapacity: The number of new elements the array should have
+  ///     space for.
+  ///   - initializer: A closure that initializes new elements.
+  ///     - Parameters:
+  ///       - span: An `OutputSpan` covering uninitialized memory with
+  ///         space for the specified number of additional elements.
+  @_alwaysEmitIntoClient
+  @available(SwiftCompatibilitySpan 5.0, *)
+  public mutating func append<E: Error>(
+    addingCapacity: Int,
+    initializingWith initializer: (
+      _ span: inout OutputSpan<Element>
+    ) throws(E) -> Void
+  ) throws(E) {
+    // Ensure uniqueness, mutability, and sufficient storage.
+    reserveCapacityForAppend(newElementsCount: addingCapacity)
+    _precondition(_buffer.beginCOWMutation())
+
+    let pointer = unsafe _buffer.firstElementAddress
+    let uninitializedPointer = unsafe pointer.advanced(by: count)
+    let buffer = unsafe UnsafeMutableBufferPointer(
+      start: uninitializedPointer, count: addingCapacity
+    )
+    var span = unsafe OutputSpan(buffer: buffer, initializedCount: 0)
+
+    //FIXME: This should append _after_ the base's storage (the tail),
+    //       and then rotate the tail with the new elements.
+
+    // The following should be a `defer` block.
+    // Workaround for https://github.com/swiftlang/swift/issues/76388
+    func finalize(_ span: consuming OutputSpan<Element>) {
+      // Update mutableCount even when `initializer` throws an error.
+      self._buffer.count += unsafe span.finalize(for: buffer)
+      _endMutation()
+    }
+
+    // If `defer` worked above, then this wouldn't need do/catch block.
+    // Workaround for https://github.com/swiftlang/swift/issues/76388
+    do throws(E) {
+      try initializer(&span)
+      finalize(span)
+    }
+    catch {
+      finalize(span)
+      throw error
+    }
+  }
+
   @inlinable
   public mutating func _customRemoveLast() -> Element? {
     _precondition(count > 0, "Can't removeLast from an empty ArraySlice")

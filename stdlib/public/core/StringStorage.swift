@@ -328,7 +328,7 @@ extension __StringStorage {
     _internalInvariant(capacity >= countAndFlags.count)
     _internalInvariant(
       countAndFlags.isNativelyStored && countAndFlags.isTailAllocated)
-    
+
     let (storage, capAndFlags) = _allocateStringStorage(
       codeUnitCapacity: capacity,
       precalculatedUTF16Count: utf16Len
@@ -440,7 +440,7 @@ extension __StringStorage {
 // Usage
 extension __StringStorage {
   internal var hasBreadcrumbs: Bool { _capacityAndFlags.hasBreadcrumbs }
-  
+
   internal var hasOneCrumb: Bool {
     if !_capacityAndFlags.hasBreadcrumbs {
       return false
@@ -848,7 +848,7 @@ extension _StringGuts {
         unsafe UnsafeMutablePointer(Builtin.addressof(&$0._breadcrumbs))
       }
     }
-    
+
     if !oneCrumb, let breadcrumbs = unsafe _stdlib_atomicAcquiringLoadARCRef(object: mutPtr) {
       return unsafe breadcrumbs
     }

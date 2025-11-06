@@ -106,21 +106,21 @@ strings.forEach { expected in
       expectEqual(span[i], expected.utf8[j])
     }
   }
+}
 
-  strings.forEach { expected in
-    suite.test("UTF8Span from Bridged String Substring: \(expected)")
-    .require(.stdlib_6_2).code {
-      guard #available(SwiftStdlib 6.2, *) else { return }
+strings.forEach { expected in
+  suite.test("UTF8Span from Bridged String Substring: \(expected)")
+  .require(.stdlib_6_2).code {
+    guard #available(SwiftStdlib 6.2, *) else { return }
 
-      guard let nss = expectNotNil(NSString(utf8String: expected)) else { return }
+    guard let nss = expectNotNil(NSString(utf8String: expected)) else { return }
 
-      let bridged = String(nss).dropFirst()
-      guard let utf8 = expectNotNil(bridged._utf8Span) else { return }
-      let expected = expected.dropFirst()
-      expectEqual(utf8.count, expected.utf8.count)
-      for (i,j) in zip(utf8.span.indices, expected.utf8.indices) {
-        expectEqual(utf8.span[i], expected.utf8[j])
-      }
+    let bridged = String(nss).dropFirst()
+    guard let utf8 = expectNotNil(bridged._utf8Span) else { return }
+    let expected = expected.dropFirst()
+    expectEqual(utf8.count, expected.utf8.count)
+    for (i,j) in zip(utf8.span.indices, expected.utf8.indices) {
+      expectEqual(utf8.span[i], expected.utf8[j])
     }
   }
 }

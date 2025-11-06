@@ -33,6 +33,7 @@ strings[1].1 = false
 strings.forEach { (string, contiguous) in
   suite.test("Contiguous: \(string)")
   .require(.stdlib_6_2).code {
+    guard #available(SwiftStdlib 6.2, *) else { return }
 
     expectEqual(string.isContiguousUTF8, contiguous)
   }
@@ -41,6 +42,8 @@ strings.forEach { (string, contiguous) in
 strings.forEach { (string, contiguous) in
   suite.test("Contiguous Substring: \(string)")
   .require(.stdlib_6_2).code {
+    guard #available(SwiftStdlib 6.2, *) else { return }
+
     let substring = string[...]
     expectEqual(substring.isContiguousUTF8, contiguous)
   }
@@ -49,6 +52,8 @@ strings.forEach { (string, contiguous) in
 strings.forEach { (string, contiguous) in
   suite.test("String.makeContiguousUTF8: \(string)")
   .require(.stdlib_6_2).code {
+    guard #available(SwiftStdlib 6.2, *) else { return }
+
     var s = string
     s.makeContiguousUTF8()
     expectTrue(s.isContiguousUTF8)
@@ -59,6 +64,8 @@ strings.forEach { (string, contiguous) in
 strings.forEach { (string, contiguous) in
   suite.test("Substring.makeContiguousUTF8: \(string)")
   .require(.stdlib_6_2).code {
+    guard #available(SwiftStdlib 6.2, *) else { return }
+
     var s: Substring = string.dropFirst().dropLast()
     s.makeContiguousUTF8()
     expectTrue(s.isContiguousUTF8)

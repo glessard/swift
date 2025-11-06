@@ -69,7 +69,7 @@ enum MyTestError: Error { case error }
 
 suite.test("Create OutputSpan")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let c = 48
   let allocation = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: c)
@@ -82,7 +82,7 @@ suite.test("Create OutputSpan")
 
 suite.test("deinit without relinquishing memory")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let c = 48
   let allocation = UnsafeMutableBufferPointer<UInt8>.allocate(capacity: c)
@@ -97,7 +97,7 @@ suite.test("deinit without relinquishing memory")
 
 suite.test("append single elements")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   var a = Allocation(of: 48, Int.self)
   let c = 10
@@ -120,7 +120,7 @@ suite.test("append single elements")
 
 suite.test("initialize buffer with repeated elements")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   var a = Allocation(of: 48, Int.self)
   let c = 10
@@ -140,7 +140,7 @@ suite.test("initialize buffer with repeated elements")
 
 suite.test("indices property")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let capacity = 4
   let b = UnsafeMutableBufferPointer<Int>.allocate(capacity: capacity)
@@ -156,7 +156,7 @@ suite.test("indices property")
 
 suite.test("IndexingSubscript")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let capacity = 4
   let b = UnsafeMutableBufferPointer<Int>.allocate(capacity: capacity)
@@ -173,7 +173,7 @@ suite.test("IndexingSubscript")
 
 suite.test("deinitialize buffer")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   var a = Allocation(of: 48, Int.self)
   do {
@@ -208,7 +208,7 @@ suite.test("deinitialize buffer")
 
 suite.test("InlineArray initialization")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let i = InlineArray<10, Int> {
     (o: inout OutputSpan<Int>) in
@@ -226,7 +226,7 @@ suite.test("InlineArray initialization")
 suite.test("InlineArray initialization underflow")
 .skip(.wasiAny(reason: "Trap tests aren't supported on WASI."))
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   expectCrashLater()
   _ = InlineArray<4, Int> {
@@ -236,7 +236,7 @@ suite.test("InlineArray initialization underflow")
 
 suite.test("InlineArray initialization throws")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   enum LocalError: Error { case error }
 
@@ -269,6 +269,8 @@ private struct NCSendable: ~Copyable, Sendable {}
 
 suite.test("OutputSpan Sendability")
 .require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
+
   let buffer = UnsafeMutableBufferPointer<NCSendable>.allocate(capacity: 1)
   defer { buffer.deallocate() }
 

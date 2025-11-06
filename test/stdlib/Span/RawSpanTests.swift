@@ -20,12 +20,8 @@ var suite = TestSuite("Span Tests")
 defer { runAllTests() }
 
 suite.test("Initialize with Span<Int>")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+.require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let capacity = 4
   Array(0..<capacity).withUnsafeBufferPointer {
@@ -47,12 +43,8 @@ suite.test("Initialize with Span<Int>")
 }
 
 suite.test("Initialize with UnsafeRawBufferPointer")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+.require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let capacity = 4
   var a = Array(0..<capacity)
@@ -68,12 +60,8 @@ suite.test("Initialize with UnsafeRawBufferPointer")
 }
 
 suite.test("Initialize with UnsafeRawPointer")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+.require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let capacity = 4
   var a = Array(0..<capacity)
@@ -97,12 +85,8 @@ suite.test("Initialize with UnsafeRawPointer")
 }
 
 suite.test("unsafeLoad(as:)")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+.require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let capacity = 4
   let s = (0..<capacity).map({ "\(#file)+\(#function) #\($0)" })
@@ -120,12 +104,8 @@ suite.test("unsafeLoad(as:)")
 }
 
 suite.test("unsafeLoadUnaligned(as:)")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+.require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let capacity = 64
   let a = Array(0..<UInt8(capacity))
@@ -143,12 +123,8 @@ suite.test("unsafeLoadUnaligned(as:)")
 }
 
 suite.test("extracting() functions")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+.require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let capacity = 4
   let b = (0..<capacity).map(Int8.init)
@@ -178,12 +154,8 @@ suite.test("extracting() functions")
 }
 
 suite.test("extracting(unchecked:) functions")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+.require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let capacity = 32
   let b = (0..<capacity).map(UInt8.init)
@@ -197,12 +169,8 @@ suite.test("extracting(unchecked:) functions")
 }
 
 suite.test("prefix extracting() functions")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+.require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let capacity = 4
   let a = Array(0..<UInt8(capacity))
@@ -238,12 +206,8 @@ suite.test("prefix extracting() functions")
 }
 
 suite.test("suffix extracting() functions")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+.require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let capacity = 4
   let a = Array(0..<UInt8(capacity))
@@ -267,12 +231,8 @@ suite.test("suffix extracting() functions")
 }
 
 suite.test("withUnsafeBytes()")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+.require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let capacity = 4
   let array = Array(0..<capacity)
@@ -296,12 +256,8 @@ suite.test("withUnsafeBytes()")
 }
 
 suite.test("byteOffsets(of:)")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+.require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let b = UnsafeMutableRawBufferPointer.allocate(byteCount: 8, alignment: 8)
   defer { b.deallocate() }
@@ -336,6 +292,8 @@ private func send(_: borrowing some Sendable & ~Copyable & ~Escapable) {}
 
 suite.test("RawSpan Sendability")
 .require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
+
   let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 1, alignment: 2)
   defer { buffer.deallocate() }
 

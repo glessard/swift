@@ -64,7 +64,7 @@ enum MyTestError: Error { case error }
 
 suite.test("Create OutputRawSpan")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let c = 48
   let allocation = UnsafeMutableRawBufferPointer.allocate(byteCount: c, alignment: 16)
@@ -77,7 +77,7 @@ suite.test("Create OutputRawSpan")
 
 suite.test("deinit without relinquishing memory")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let c = 48
   let allocation = UnsafeMutableRawBufferPointer.allocate(byteCount: c, alignment: 16)
@@ -92,7 +92,7 @@ suite.test("deinit without relinquishing memory")
 
 suite.test("append single elements")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   var a = Allocation(byteCount: 48)
   let c = 10
@@ -115,7 +115,7 @@ suite.test("append single elements")
 
 suite.test("initialize buffer with repeated elements")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   var a = Allocation(byteCount: 48)
   let c = UInt8(10)
@@ -135,7 +135,7 @@ suite.test("initialize buffer with repeated elements")
 
 suite.test("deinitialize buffer")
 .require(.stdlib_6_2).code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   var a = Allocation(byteCount: 48)
   do {
@@ -158,6 +158,8 @@ private func send(_: borrowing some Sendable & ~Copyable & ~Escapable) {}
 
 suite.test("OutputRawSpan Sendability")
 .require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
+
   let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 1, alignment: 2)
   defer { buffer.deallocate() }
 

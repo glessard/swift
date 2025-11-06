@@ -21,12 +21,8 @@ var suite = TestSuite("SpanBytesProperty")
 defer { runAllTests() }
 
 suite.test("Span/bytes property")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
-  guard #available(SwiftStdlib 6.2, *) else { return }
+.require(.stdlib_6_2).code {
+  guard #available(SwiftStdlib 5.0, *) else { return }
 
   let capacity = 4
   let a = ContiguousArray(0..<capacity)

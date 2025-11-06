@@ -23,11 +23,7 @@ var suite = TestSuite("Span properties backed by inline storage")
 defer { runAllTests() }
 
 suite.test("CollectionOfOne.span property")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
+.require(.stdlib_6_2).code {
   guard #available(SwiftStdlib 6.2, *) else { return }
 
   var s = "A long string that is absolutely not smol at all."
@@ -41,13 +37,9 @@ suite.test("CollectionOfOne.span property")
 }
 
 suite.test("CollectionOfOne.span property (simple)")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
+.require(.stdlib_6_2).code {
   guard #available(SwiftStdlib 6.2, *) else { return }
-  
+
   let c = CollectionOfOne(Int.random(in: 0..<100000))
   let span = c.span
   expectEqual(span.count, c.indices.count)
@@ -59,11 +51,7 @@ struct Padded: BitwiseCopyable {
 }
 
 suite.test("CollectionOfOne.span stride test")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
+.require(.stdlib_6_2).code {
   guard #available(SwiftStdlib 6.2, *) else { return }
 
   let c = CollectionOfOne(Padded(storage: (-1, 1)))
@@ -86,11 +74,7 @@ suite.test("CollectionOfOne.mutableSpan property (simple)")
 }
 
 suite.test("InlineArray.span property")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
+.require(.stdlib_6_2).code {
   guard #available(SwiftStdlib 6.2, *) else { return }
 
   var s = InlineArray<5, Int>(repeating: 0)
@@ -103,11 +87,7 @@ suite.test("InlineArray.span property")
 }
 
 suite.test("InlineArray.span property (String)")
-.skip(.custom(
-  { if #available(SwiftStdlib 6.2, *) { false } else { true } },
-  reason: "Requires Swift 6.2's standard library"
-))
-.code {
+.require(.stdlib_6_2).code {
   guard #available(SwiftStdlib 6.2, *) else { return }
 
   var s = InlineArray<5, String>(repeating: "0")
@@ -120,8 +100,7 @@ suite.test("InlineArray.span property (String)")
 }
 
 suite.test("InlineArray.mutableSpan property")
-.require(.stdlib_6_2).code
-{
+.require(.stdlib_6_2).code {
   guard #available(SwiftStdlib 6.2, *) else { return }
 
   var v = InlineArray<5, Int>(repeating: 0)
@@ -134,8 +113,7 @@ suite.test("InlineArray.mutableSpan property")
 }
 
 suite.test("InlineArray.mutableSpan property (String)")
-.require(.stdlib_6_2).code
-{
+.require(.stdlib_6_2).code {
   guard #available(SwiftStdlib 6.2, *) else { return }
 
   var v = InlineArray<5, String>(repeating: "0")

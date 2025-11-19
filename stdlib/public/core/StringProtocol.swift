@@ -120,6 +120,16 @@ public protocol StringProtocol
 }
 
 extension StringProtocol {
+  @available(*, deprecated, message: "use `.utf8Span` or `.utf8.withContiguousStorageIfAvailable` instead")
+  @_alwaysEmitIntoClient
+  public func withContiguousStorageIfAvailable<R>(
+    _ body: (UnsafeBufferPointer<Character>) throws -> R
+  ) rethrows -> R? {
+    nil
+  }
+}
+
+extension StringProtocol {
   // TODO(String performance): Make a _SharedString for non-smol Substrings
   //
   // TODO(String performance): Provide a closure-based call with stack-allocated

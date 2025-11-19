@@ -282,4 +282,12 @@ SubstringTests.test("Substring.base") {
   }
 }
 
+SubstringTests.test("Substring.withContiguousStorageIfAvailable") {
+  let str = "ASCII string."
+  expectNil(str.withContiguousStorageIfAvailable { Array($0) })
+
+  let substr = str.dropFirst()
+  expectNil(substr.withContiguousStorageIfAvailable { Array($0) })
+}
+
 runAllTests()

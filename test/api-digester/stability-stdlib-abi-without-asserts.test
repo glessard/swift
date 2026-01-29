@@ -827,6 +827,7 @@ Func ArraySlice.withUnsafeBufferPointer(_:) has been removed
 Func ContiguousArray.withUnsafeBufferPointer(_:) has been removed
 Func Dictionary._Variant.mapValues(_:) has been removed
 Func Dictionary._Variant.merge(_:uniquingKeysWith:) has been removed
+Func Dictionary.filter(_:) has been removed
 Func Dictionary.mapValues(_:) has been removed
 Func Dictionary.merge(_:uniquingKeysWith:) has been removed
 Func Dictionary.merging(_:uniquingKeysWith:) has been removed

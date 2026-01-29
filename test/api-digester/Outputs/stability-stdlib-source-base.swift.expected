@@ -373,6 +373,8 @@ Constructor Dictionary.init(_:uniquingKeysWith:) has generic signature change fr
 Constructor Dictionary.init(_:uniquingKeysWith:) is now without rethrows
 Constructor Dictionary.init(grouping:by:) has generic signature change from <Key, Value, S where Key : Swift.Hashable, Value == [S.Element], S : Swift.Sequence> to <Key, Value, S, E where Key : Swift.Hashable, Value == [S.Element], S : Swift.Sequence, E : Swift.Error>
 Constructor Dictionary.init(grouping:by:) is now without rethrows
+Func Dictionary.filter(_:) has generic signature change from <Key, Value where Key : Swift.Hashable> to <Key, Value, E where Key : Swift.Hashable, E : Swift.Error>
+Func Dictionary.filter(_:) is now without rethrows
 
 // Adoption of @_addressableForDependencies
 Struct CollectionOfOne is now with @_addressableForDependencies

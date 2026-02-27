@@ -47,6 +47,18 @@ public struct Borrow<Value: ~Copyable>: Copyable, ~Escapable {
   ) {
     builtin = unsafe Builtin.makeBorrow(pointer.pointee)
   }
+
+  @available(SwiftStdlib 6.4, *)
+  @unsafe
+  @_alwaysEmitIntoClient
+  @_lifetime(copy container)
+  @_transparent
+  internal init(
+    _unsafeAddress pointer: UnsafePointer<Value>,
+    container: some ~Escapable
+  ) {
+    builtin = unsafe Builtin.makeBorrow(pointer.pointee)
+  }
 }
 
 @available(SwiftStdlib 6.4, *)

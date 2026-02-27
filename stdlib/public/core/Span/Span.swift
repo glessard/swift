@@ -523,6 +523,19 @@ extension Span where Element: BitwiseCopyable {
   }
 }
 
+@available(SwiftStdlib 6.4, *)
+extension Span where Element: ~Copyable {
+  @lifetime(copy self)
+  public func _borrowElement(at index: Index) -> Borrow<Element> {
+    _checkIndex(index)
+    let address = unsafe _unsafeAddressOfElement(unchecked: index)
+    return unsafe Borrow<Element>(_unsafeAddress: address, container: self)
+    // it would be nice to just write:
+    // let borrow = Borrow(self[index])
+    // return unsafe _overrideLifetime(borrow, copying: self)
+  }
+}
+
 // MARK: sub-spans
 @available(SwiftCompatibilitySpan 5.0, *)
 @_originallyDefinedIn(module: "Swift;CompatibilitySpan", SwiftCompatibilitySpan 6.2)

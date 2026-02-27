@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// RUN: %target-run-stdlib-swift(-enable-experimental-feature SuppressedAssociatedTypesWithDefaults)
+// RUN: %target-run-stdlib-swift(-enable-experimental-feature SuppressedAssociatedTypesWithDefaults -enable-experimental-feature BorrowInout)
 
 // REQUIRES: executable_test
 // REQUIRES: swift_feature_SuppressedAssociatedTypesWithDefaults
@@ -762,4 +762,15 @@ suite.test("BORROWING")
   expectEqual(array.reduce(0, +), inline.reduce(0, +))
 
   expectTrue(span.elementsEqual(inline))
+}
+
+suite.test("borrow-an-element")
+.require(.stdlib_6_4).code {
+  guard #available(SwiftStdlib 6.4, *) else { expectTrue(false); return }
+
+  let array: [[Int]] = (0..<10).map({ [$0] })
+  let index = array.indices.randomElement()!
+  let borrowedElement = array.span._borrowElement(at: index)
+
+  expectEqual(index, borrowedElement.value.first)
 }

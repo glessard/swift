@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2024 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2026 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -424,6 +424,23 @@ extension Optional where Wrapped: ~Copyable & ~Escapable {
       return x
     }
     _internalInvariantFailure("_uncheckedUnwrapped of nil optional")
+  }
+}
+
+@available(SwiftCompatibilitySpan 5.0, *)
+@_originallyDefinedIn(module: "Swift;CompatibilitySpan", SwiftCompatibilitySpan 6.2)
+extension Optional where Wrapped: ~Copyable & Escapable {
+  @_alwaysEmitIntoClient
+  public var mutableSpan: MutableSpan<Wrapped> {
+    @lifetime(&self)
+    mutating get {
+      if self == nil {
+        return MutableSpan()
+      }
+      let a = Builtin.unprotectedAddressOfBorrow(self)
+      let s = unsafe MutableSpan<Wrapped>(_unsafeStart: .init(a), count: 1)
+      return unsafe _overrideLifetime(s, borrowing: self)
+    }
   }
 }
 

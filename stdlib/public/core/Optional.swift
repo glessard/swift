@@ -435,6 +435,7 @@ extension Optional where Wrapped: ~Copyable & Escapable {
     @_addressableSelf
     @lifetime(borrow self)
     borrowing get {
+      // FIXME: rdar://173472004. The `_span()` function below works as expected.
       if self == nil {
         return Span()
       }
@@ -442,6 +443,18 @@ extension Optional where Wrapped: ~Copyable & Escapable {
       let s = unsafe Span<Wrapped>(_unsafeStart: .init(a), count: 1)
       return unsafe _overrideLifetime(s, borrowing: self)
     }
+  }
+
+  @_alwaysEmitIntoClient
+  @_addressableSelf
+  @lifetime(borrow self)
+  public func _span() -> Span<Wrapped> {
+    if self == nil {
+      return Span()
+    }
+    let a = Builtin.unprotectedAddressOfBorrow(self)
+    let s = unsafe Span<Wrapped>(_unsafeStart: .init(a), count: 1)
+    return unsafe _overrideLifetime(s, borrowing: self)
   }
 
   @_alwaysEmitIntoClient
@@ -1047,22 +1060,3 @@ extension Optional: _ObjectiveCBridgeable {
   }
 }
 #endif
-
-extension Optional where Wrapped: ~Copyable {
-  @available(SwiftStdlib 6.3, *)
-  @_transparent
-  public var _span: Span<Wrapped> {
-    @_addressableSelf
-    @lifetime(borrow self)
-    get {
-      guard self != nil else {
-        return Span()
-      }
-
-      let ptr = Builtin.unprotectedAddressOfBorrow(self)
-      return unsafe _overrideLifetime(
-        Span(_unsafeStart: UnsafePointer(ptr), count: 1),
-        borrowing: self)
-    }
-  }
-}

@@ -441,49 +441,49 @@ extension Span where Element: ~Copyable {
   @_semantics("fixed_storage.check_index")
   @inline(__always)
   @_alwaysEmitIntoClient
-  internal func _checkIndex(_ position: Index) {
-    _precondition(indices.contains(position), "Index out of bounds")
+  internal func _checkIndex(_ index: Index) {
+    _precondition(indices.contains(index), "Index out of bounds")
   }
 
   /// Accesses the element at the specified index in the `Span`.
   ///
-  /// - Parameter position: The offset of the element to access. `position`
+  /// - Parameter index: The offset of the element to access. `index`
   ///     must be greater or equal to zero, and less than `count`.
   ///
   /// - Complexity: O(1)
   @_alwaysEmitIntoClient
-  public subscript(_ position: Index) -> Element {
+  public subscript(_ index: Index) -> Element {
     @_transparent
     borrow {
-      _checkIndex(position)
-      return unsafe self[unchecked: position]
+      _checkIndex(index)
+      return unsafe self[unchecked: index]
     }
   }
 
   /// Accesses the element at the specified index in the `Span`.
   ///
-  /// This subscript does not validate `position`. Using this subscript
-  /// with an invalid `position` results in undefined behaviour.
+  /// This subscript does not validate `index`. Using this subscript
+  /// with an invalid `index` results in undefined behaviour.
   ///
-  /// - Parameter position: The offset of the element to access. `position`
+  /// - Parameter index: The offset of the element to access. `index`
   ///     must be greater or equal to zero, and less than `count`.
   ///
   /// - Complexity: O(1)
   @unsafe
   @_alwaysEmitIntoClient
-  public subscript(unchecked position: Index) -> Element {
+  public subscript(unchecked index: Index) -> Element {
     @_unsafeSelfDependentResult
     borrow {
-      Builtin.borrowAt(unsafe _unsafeAddressOfElement(unchecked: position))
+      Builtin.borrowAt(unsafe _unsafeAddressOfElement(unchecked: index))
     }
   }
 
   @unsafe
   @_alwaysEmitIntoClient
   internal func _unsafeAddressOfElement(
-    unchecked position: Index
+    unchecked index: Index
   ) -> Builtin.RawPointer {
-    let elementOffset = position &* MemoryLayout<Element>.stride
+    let elementOffset = index &* MemoryLayout<Element>.stride
     return unsafe _start().advanced(by: elementOffset)._rawValue
   }
 }
@@ -493,33 +493,33 @@ extension Span where Element: ~Copyable {
 extension Span where Element: BitwiseCopyable {
   /// Accesses the element at the specified index in the `Span`.
   ///
-  /// - Parameter position: The offset of the element to access. `position`
+  /// - Parameter index: The offset of the element to access. `index`
   ///     must be greater or equal to zero, and less than `count`.
   ///
   /// - Complexity: O(1)
   @_alwaysEmitIntoClient
-  public subscript(_ position: Index) -> Element {
+  public subscript(_ index: Index) -> Element {
     @_transparent
     get {
-      _checkIndex(position)
-      return unsafe self[unchecked: position]
+      _checkIndex(index)
+      return unsafe self[unchecked: index]
     }
   }
 
   /// Accesses the element at the specified index in the `Span`.
   ///
-  /// This subscript does not validate `position`. Using this subscript
-  /// with an invalid `position` results in undefined behaviour.
+  /// This subscript does not validate `index`. Using this subscript
+  /// with an invalid `index` results in undefined behaviour.
   ///
-  /// - Parameter position: The offset of the element to access. `position`
+  /// - Parameter index: The offset of the element to access. `index`
   ///     must be greater or equal to zero, and less than `count`.
   ///
   /// - Complexity: O(1)
   @unsafe
   @_alwaysEmitIntoClient
-  public subscript(unchecked position: Index) -> Element {
+  public subscript(unchecked index: Index) -> Element {
     get {
-      let address = unsafe _unsafeAddressOfElement(unchecked: position)
+      let address = unsafe _unsafeAddressOfElement(unchecked: index)
       return unsafe UnsafeRawPointer(address).loadUnaligned(as: Element.self)
     }
   }

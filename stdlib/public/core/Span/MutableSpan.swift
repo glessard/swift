@@ -396,51 +396,51 @@ extension MutableSpan where Element: ~Copyable {
   @_semantics("fixed_storage.check_index")
   @inline(__always)
   @_alwaysEmitIntoClient
-  internal func _checkIndex(_ position: Index) {
-    _precondition(indices.contains(position), "index out of bounds")
+  internal func _checkIndex(_ index: Index) {
+    _precondition(indices.contains(index), "index out of bounds")
   }
   /// Accesses the element at the specified index in the `MutableSpan`.
   ///
-  /// - Parameter position: The offset of the element to access. `position`
+  /// - Parameter index: The offset of the element to access. `index`
   ///     must be greater or equal to zero, and less than `count`.
   ///
   /// - Complexity: O(1)
   @_alwaysEmitIntoClient
-  public subscript(_ position: Index) -> Element {
+  public subscript(_ index: Index) -> Element {
     @_transparent
     borrow {
-      _checkIndex(position)
-      return unsafe self[unchecked: position]
+      _checkIndex(index)
+      return unsafe self[unchecked: index]
     }
     @_transparent
     @lifetime(self: copy self)
     mutate {
-      _checkIndex(position)
-      return unsafe &self[unchecked: position]
+      _checkIndex(index)
+      return unsafe &self[unchecked: index]
     }
   }
 
   /// Accesses the element at the specified index in the `MutableSpan`.
   ///
-  /// This subscript does not validate `position`; this is an unsafe operation.
+  /// This subscript does not validate `index`; this is an unsafe operation.
   ///
-  /// - Parameter position: The offset of the element to access. `position`
+  /// - Parameter index: The offset of the element to access. `index`
   ///     must be greater or equal to zero, and less than `count`.
   ///
   /// - Complexity: O(1)
   @unsafe
   @_alwaysEmitIntoClient
-  public subscript(unchecked position: Index) -> Element {
+  public subscript(unchecked index: Index) -> Element {
     @_transparent
     @_unsafeSelfDependentResult
     borrow {
-      Builtin.borrowAt(unsafe _unsafeAddressOfElement(unchecked: position))
+      Builtin.borrowAt(unsafe _unsafeAddressOfElement(unchecked: index))
     }
     @_transparent
     @_unsafeSelfDependentResult
     @lifetime(self: copy self)
     mutate {
-      let address = unsafe _unsafeAddressOfElement(unchecked: position)
+      let address = unsafe _unsafeAddressOfElement(unchecked: index)
       return unsafe &(UnsafeMutablePointer(address).pointee)
     }
   }
@@ -449,9 +449,9 @@ extension MutableSpan where Element: ~Copyable {
   @_alwaysEmitIntoClient
   @_transparent
   internal func _unsafeAddressOfElement(
-    unchecked position: Index
+    unchecked index: Index
   ) -> Builtin.RawPointer {
-    let elementOffset = position &* MemoryLayout<Element>.stride
+    let elementOffset = index &* MemoryLayout<Element>.stride
     return unsafe _start().advanced(by: elementOffset)._rawValue
   }
 }

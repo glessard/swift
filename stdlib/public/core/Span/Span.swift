@@ -654,6 +654,7 @@ extension Span where Element: ~Copyable {
   @export(implementation)
   @lifetime(copy self)
   public func extracting(unchecked bounds: Range<Index>) -> Self {
+    _internalInvariant(_checkBounds(bounds), "Byte offset range out of bounds")
     let delta = bounds.lowerBound &* MemoryLayout<Element>.stride
     let newStart = unsafe _pointer?.advanced(by: delta)
     let newSpan = unsafe Span(_unchecked: newStart, count: bounds.count)

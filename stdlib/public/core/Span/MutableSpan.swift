@@ -748,6 +748,7 @@ extension MutableSpan where Element: ~Copyable {
   @export(implementation)
   @_lifetime(&self)
   mutating public func _mutatingExtracting(unchecked bounds: Range<Index>) -> Self {
+    _internalInvariant(_checkBounds(bounds), "Index range out of bounds")
     let delta = bounds.lowerBound &* MemoryLayout<Element>.stride
     let newStart = unsafe _pointer?.advanced(by: delta)
     let newSpan = unsafe Self(_unchecked: newStart, count: bounds.count)
@@ -798,6 +799,7 @@ extension MutableSpan where Element: ~Copyable {
   @export(implementation)
   @_lifetime(copy self)
   consuming public func _consumingExtracting(unchecked bounds: Range<Index>) -> Self {
+    _internalInvariant(_checkBounds(bounds), "Index range out of bounds")
     let delta = bounds.lowerBound &* MemoryLayout<Element>.stride
     let newStart = unsafe _pointer?.advanced(by: delta)
     let newSpan = unsafe Self(_unchecked: newStart, count: bounds.count)

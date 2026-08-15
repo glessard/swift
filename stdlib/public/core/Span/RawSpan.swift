@@ -485,6 +485,7 @@ extension RawSpan {
   @export(implementation)
   @_lifetime(copy self)
   public func extracting(unchecked bounds: Range<Int>) -> Self {
+    _internalInvariant(_checkBounds(bounds), "Byte offset range out of bounds")
     let newStart = unsafe _pointer?.advanced(by: bounds.lowerBound)
     let newSpan = unsafe RawSpan(_unchecked: newStart, byteCount: bounds.count)
     return unsafe _overrideLifetime(newSpan, copying: self)

@@ -804,6 +804,7 @@ extension MutableRawSpan {
   @export(implementation)
   @_lifetime(&self)
   mutating public func _mutatingExtracting(unchecked bounds: Range<Int>) -> Self {
+    _internalInvariant(_checkBounds(bounds), "Byte offset range out of bounds")
     let newStart = unsafe _pointer?.advanced(by: bounds.lowerBound)
     let newSpan = unsafe Self(_unchecked: newStart, byteCount: bounds.count)
     return unsafe _overrideLifetime(newSpan, mutating: &self)
@@ -853,6 +854,7 @@ extension MutableRawSpan {
   @export(implementation)
   @_lifetime(copy self)
   consuming public func _consumingExtracting(unchecked bounds: Range<Int>) -> Self {
+    _internalInvariant(_checkBounds(bounds), "Byte offset range out of bounds")
     let newStart = unsafe _pointer?.advanced(by: bounds.lowerBound)
     let newSpan = unsafe Self(_unchecked: newStart, byteCount: bounds.count)
     return unsafe _overrideLifetime(newSpan, copying: self)

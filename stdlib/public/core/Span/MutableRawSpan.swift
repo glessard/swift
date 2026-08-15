@@ -729,11 +729,7 @@ extension MutableRawSpan {
   @export(implementation)
   @_lifetime(&self)
   mutating public func _mutatingExtracting(_ bounds: Range<Int>) -> Self {
-    _precondition(
-      UInt(bitPattern: bounds.lowerBound) <= UInt(bitPattern: _count) &&
-      UInt(bitPattern: bounds.upperBound) <= UInt(bitPattern: _count),
-      "Byte offset range out of bounds"
-    )
+    _precondition(_checkBounds(bounds), "Byte offset range out of bounds")
     return unsafe _mutatingExtracting(unchecked: bounds)
   }
 
@@ -775,11 +771,7 @@ extension MutableRawSpan {
   @export(implementation)
   @_lifetime(copy self)
   consuming public func _consumingExtracting(_ bounds: Range<Int>) -> Self {
-    _precondition(
-      UInt(bitPattern: bounds.lowerBound) <= UInt(bitPattern: _count) &&
-      UInt(bitPattern: bounds.upperBound) <= UInt(bitPattern: _count),
-      "Byte offset range out of bounds"
-    )
+    _precondition(_checkBounds(bounds), "Byte offset range out of bounds")
     return unsafe _consumingExtracting(unchecked: bounds)
   }
 

@@ -620,11 +620,7 @@ extension Span where Element: ~Copyable {
   @export(implementation)
   @lifetime(copy self)
   public func extracting(_ bounds: Range<Index>) -> Self {
-    _precondition(
-      UInt(bitPattern: bounds.lowerBound) <= UInt(bitPattern: _count) &&
-      UInt(bitPattern: bounds.upperBound) <= UInt(bitPattern: _count),
-      "Index range out of bounds"
-    )
+    _precondition(_checkBounds(bounds), "Byte offset range out of bounds")
     return unsafe extracting(unchecked: bounds)
   }
 

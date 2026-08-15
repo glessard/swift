@@ -411,6 +411,13 @@ extension MutableSpan where Element: ~Copyable {
   internal func _checkIndex(_ position: Index) {
     _precondition(indices.contains(position), "index out of bounds")
   }
+
+  @export(implementation) @inline(always)
+  public func _checkBounds(_ bounds: Range<Index>) -> Bool {
+    UInt(bitPattern: bounds.lowerBound) <= UInt(bitPattern: count) &&
+    UInt(bitPattern: bounds.upperBound) <= UInt(bitPattern: count)
+  }
+
   /// Accesses the element at the specified index in the `MutableSpan`.
   ///
   /// - Parameter position: The offset of the element to access. `position`

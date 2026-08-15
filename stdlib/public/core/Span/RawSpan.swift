@@ -400,6 +400,12 @@ extension RawSpan {
     _precondition(byteOffsets.contains(position), "Index out of bounds")
   }
 
+  @export(implementation) @inline(always)
+  public func _checkBounds(_ bounds: Range<Index>) -> Bool {
+    UInt(bitPattern: bounds.lowerBound) <= UInt(bitPattern: count) &&
+    UInt(bitPattern: bounds.upperBound) <= UInt(bitPattern: count)
+  }
+
   /// Accesses the byte at the specified offset in the span.
   ///
   /// - Parameter byteOffset: The offset of the byte to access. `byteOffset`

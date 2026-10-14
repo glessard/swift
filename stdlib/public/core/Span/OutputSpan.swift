@@ -200,7 +200,8 @@ extension OutputSpan where Element: ~Copyable {
     unsafe Range(_uncheckedBounds: (0, count))
   }
 
-  // SILOptimizer looks for fixed_storage.check_index semantics for bounds check optimizations.
+  // SILOptimizer looks for fixed_storage.check_index semantics
+  // for bounds check optimizations.
   @_semantics("fixed_storage.check_index")
   @inline(__always)
   @export(implementation)
@@ -240,8 +241,7 @@ extension OutputSpan where Element: ~Copyable {
   public subscript(unchecked index: Index) -> Element {
     @_unsafeSelfDependentResult
     borrow {
-      unsafe UnsafePointer<Element>(
-        _unsafeAddressOfElement(unchecked: index)).pointee
+      unsafe UnsafePointer(_unsafeAddressOfElement(unchecked: index)).pointee
     }
     @_unsafeSelfDependentResult
     @_lifetime(self: copy self)

@@ -1333,6 +1333,16 @@ Added: _$ss11UniqueArrayVyxGSQsSQRzRi_zrlMc
 Added: _$ss11UniqueArrayVsRi_zrlE11descriptionSSvg
 Added: _$ss11UniqueArrayVsRi_zrlE16debugDescriptionSSvg
 
+// InputSpan
+Added: _$ss9InputSpanVMa
+Added: _$ss9InputSpanVMn
+Added: _$ss9InputSpanVsRi_zrlE6_countSivM
+Added: _$ss9InputSpanVsRi_zrlE6_countSivg
+Added: _$ss9InputSpanVsRi_zrlE6_countSivs
+Added: _$ss9InputSpanVsRi_zrlE8_pointerSvSgvg
+Added: _$ss9InputSpanVsRi_zrlE8capacitySivg
+Added: _$ss9InputSpanVyxGs8IterablesRi_zrlMc
+
 // Reference counting
 Added: _swift_releaseReturningCount
 Added: _swift_retainReturningCount

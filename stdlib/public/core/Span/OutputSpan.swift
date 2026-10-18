@@ -593,6 +593,53 @@ extension OutputSpan where Element: Copyable {
   }
 }
 
+@available(SwiftStdlib 6.5, *)
+extension OutputSpan where Element: ~Copyable {
+  /// Remove all elements from this span, and return an input span that takes
+  /// ownership of the elements.
+  ///
+  /// The `InputSpan` returned by this function represents a mutation of `self`,
+  /// and `self` cannot be used until the `InputSpan` is consumed or destroyed.
+  ///
+  /// The returned input span has a `capacity` equal to the number of elements
+  /// held by this span, and has no free capacity for prepending.
+  ///
+  /// - Returns: An `InputSpan` containing the elements that were in this span.
+  @export(implementation)
+  @_lifetime(&self)
+  public mutating func consumeAll() -> InputSpan<Element> {
+    let start: UnsafeMutablePointer<Element>? =
+      unsafe _pointer?.assumingMemoryBound(to: Element.self)
+    let buffer = unsafe UnsafeMutableBufferPointer(start: start, count: count)
+    let result = unsafe InputSpan<Element>(
+      _uncheckedBuffer: buffer, initializedCount: count
+    )
+    _count = 0
+    return unsafe _overrideLifetime(result, mutating: &self)
+  }
+
+  /// Remove all elements from this span by passing all of its elements to
+  /// a closure through an input span.
+  ///
+  /// The closure takes ownership of the elements: it can do anything with them,
+  /// including nothing. Any elements still initialized when the input span
+  /// goes out of scope are deinitialized, whether the closure returns normally
+  /// or by throwing.
+  ///
+  /// The input span has a capacity equal to the self's initialized count.
+  ///
+  /// - Parameter consumer: A closure that takes ownership of an `InputSpan`
+  ///     containing the initialized elements of this `OutputSpan`.
+  /// - Returns: The value returned by `consumer`.
+  @export(implementation)
+  public mutating func consumeAll<E: Error, R: ~Copyable>(
+    consumingWith consumer: (consuming InputSpan<Element>) throws(E) -> R
+  ) throws(E) -> R {
+    let inputSpan = consumeAll()
+    return try consumer(inputSpan)
+  }
+}
+
 @available(SwiftStdlib 6.4, *)
 extension OutputSpan: Iterable where Element: ~Copyable {
   @available(SwiftStdlib 6.4, *)

@@ -578,6 +578,65 @@ extension OutputSpan where Element: Copyable {
   }
 }
 
+@available(SwiftStdlib 6.5, *)
+extension OutputSpan where Element: ~Copyable {
+  /// Move all elements of an input span to the end of this span.
+  ///
+  /// The elements keep their order. On return, `source` is empty; it retains
+  /// its capacity.
+  ///
+  /// - Parameter source: An input span whose elements will be moved into
+  ///     this span. `source.count` must not exceed `freeCapacity`.
+  @export(implementation)
+  @_lifetime(self: copy self)
+  @_lifetime(source: copy source)
+  public mutating func append(moving source: inout InputSpan<Element>) {
+    _precondition(source.count <= freeCapacity, "OutputSpan capacity overflow")
+    unsafe source.withUnsafeMutableBufferPointer {
+      let start = $0.count &- $1
+      let items = unsafe $0.extracting(
+        unchecked: Range(uncheckedBounds: (start, $0.count))
+      )
+      $1 = 0
+      unsafe self._append(moving: items)
+    }
+  }
+
+  /// Remove all elements from this span, and return an input span that takes
+  /// ownership of the elements.
+  ///
+  /// This span is empty as soon as this method returns. The returned input
+  /// span exclusively borrows this one: this span cannot be used again until
+  /// the input span's lifetime ends. Any elements that the input span still
+  /// holds when it goes out of scope are deinitialized, whether it ends
+  /// normally or by throwing an error.
+  ///
+  /// The returned input span has a `capacity` equal to the number of elements
+  /// that this span held, so it has no free capacity for prepending.
+  ///
+  /// - Returns: An `InputSpan` containing the elements that were in this span.
+  @export(implementation)
+  @_lifetime(&self)
+  public mutating func consumeAll() -> InputSpan<Element> {
+    let start: UnsafeMutablePointer<Element>? =
+      unsafe _pointer?.assumingMemoryBound(to: Element.self)
+    let buffer = unsafe UnsafeMutableBufferPointer(start: start, count: count)
+    let result = unsafe InputSpan<Element>(
+      _uncheckedBuffer: buffer, initializedCount: count
+    )
+    _count = 0
+    return unsafe _overrideLifetime(result, mutating: &self)
+  }
+
+  @export(implementation)
+  public mutating func consumeAll<E: Error>(
+    consumingWith consumer: (consuming InputSpan<Element>) throws(E) -> Void
+  ) throws(E) {
+    let inputSpan = consumeAll()
+    try consumer(inputSpan)
+  }
+}
+
 @available(SwiftStdlib 6.4, *)
 extension OutputSpan: Iterable where Element: ~Copyable {
   @available(SwiftStdlib 6.4, *)

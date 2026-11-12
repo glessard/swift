@@ -99,6 +99,52 @@ if #available(SwiftStdlib 5.3, *) {
   }
 }
 
+StringCreateTests.test("String(unsafeUninitializedCapacity:initializingUTF8With:) negative capacity")
+.require(.minimumStdlib(.stdlib_5_3))
+.require(.crashTesting)
+.code {
+  guard #available(SwiftStdlib 5.3, *) else { return }
+
+  expectCrashLater()
+  _ = String(unsafeUninitializedCapacity: -1) { _ in 0 }
+  expectUnreachable("String initializer should have trapped.")
+}
+
+enum MyTestError: Error, Equatable { case error }
+
+StringCreateTests.test("String(repairingUTF8WithCapacity:initializingUTF8With:)")
+.require(.minimumStdlib(.stdlib_5_3))
+.code {
+  guard #available(SwiftStdlib 5.3, *) else { return }
+
+  for capacity in [0, 1, 15, 16, 100] {
+    _ = String(repairingUTF8WithCapacity: capacity) { span in
+      expectEqual(span.capacity, capacity)
+      expectEqual(span.isEmpty, true)
+    }
+  }
+
+  for capacity in [7, 40] {
+    for count in [0, 1, capacity - 1, capacity] {
+      let actual = String(repairingUTF8WithCapacity: capacity) { span in
+        for _ in 0..<count { span.append(UInt8(ascii: "a")) }
+      }
+      expectEqual(count, actual.utf8.count)
+    }
+  }
+
+  do throws(MyTestError) {
+    _ = try String(repairingUTF8WithCapacity: 37) {
+      span throws(MyTestError) in
+      span.append(UInt8(ascii: "a"))
+      throw MyTestError.error
+    }
+    expectUnreachable("String initializer should have thrown.")
+  } catch {
+    expectEqual(MyTestError.error, error)
+  }
+}
+
 if #available(SwiftStdlib 5.3, *) {
   StringCreateTests.test("Small string unsafeUninitializedCapacity") {
     let str1 = "42"

@@ -2323,6 +2323,10 @@ func _getSystemVersionPlistProperty(_ propertyName: String) -> String? {
 #endif
 
 public enum StdlibVersion: String {
+  case stdlib_5_3  = "5.3"
+  case stdlib_5_4  = "5.4"
+  case stdlib_5_5  = "5.5"
+  case stdlib_5_6  = "5.6"
   case stdlib_5_7  = "5.7"
   case stdlib_5_8  = "5.8"
   case stdlib_5_9  = "5.9"
@@ -2336,6 +2340,14 @@ public enum StdlibVersion: String {
 
   var isAvailable: Bool {
     switch self {
+    case .stdlib_5_3:
+      return if #available(SwiftStdlib 5.3, *)  { true } else { false }
+    case .stdlib_5_4:
+      return if #available(SwiftStdlib 5.4, *)  { true } else { false }
+    case .stdlib_5_5:
+      return if #available(SwiftStdlib 5.5, *)  { true } else { false }
+    case .stdlib_5_6:
+      return if #available(SwiftStdlib 5.6, *)  { true } else { false }
     case .stdlib_5_7:
       return if #available(SwiftStdlib 5.7, *)  { true } else { false }
     case .stdlib_5_8:

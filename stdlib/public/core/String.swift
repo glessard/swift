@@ -746,6 +746,73 @@ extension String {
       initializingWith: initializer)
   }
 
+  /// Creates a new string with the specified capacity in UTF-8 code units, and
+  /// then calls the given closure with an output span to initialize the
+  /// string's contents.
+  ///
+  /// Inside the closure, initialize the string by appending UTF-8 code units to
+  /// the `OutputSpan`. The `OutputSpan` keeps track of the memory's
+  /// initialization state, ensuring safety. Its `count` at the end of the
+  /// closure is the length of the new string in UTF-8 code units.
+  ///
+  /// This initializer replaces ill-formed UTF-8 sequences with the Unicode
+  /// replacement character (`"\u{FFFD}"`). This may require resizing
+  /// the buffer beyond its original capacity.
+  ///
+  /// The following examples use this initializer with the contents of two
+  /// different `UInt8` arrays---the first with a well-formed UTF-8 code unit
+  /// sequence, and the second with an ill-formed sequence at the end.
+  ///
+  ///     let validUTF8: [UInt8] = [0x43, 0x61, 0x66, 0xC3, 0xA9]
+  ///     let invalidUTF8: [UInt8] = [0x43, 0x61, 0x66, 0xC3]
+  ///
+  ///     let cafe1 = String(repairingUTF8WithCapacity: validUTF8.count) {
+  ///         for byte in validUTF8 {
+  ///             $0.append(byte)
+  ///         }
+  ///     }
+  ///     // cafe1 == "Café"
+  ///
+  ///     let cafe2 = String(repairingUTF8WithCapacity: invalidUTF8.count) {
+  ///         for byte in invalidUTF8 {
+  ///             $0.append(byte)
+  ///         }
+  ///     }
+  ///     // cafe2 == "Caf�"
+  ///
+  ///     let empty = String(repairingUTF8WithCapacity: 16) { _ in
+  ///         // Can't initialize the string (e.g. the capacity is too small).
+  ///     }
+  ///     // empty == ""
+  ///
+  /// - Parameters:
+  ///   - capacity: The number of UTF-8 code units worth of memory to allocate
+  ///     for the string.
+  ///   - initializer: A closure that initializes the contents of the new
+  ///     string.
+  ///     - Parameters:
+  ///       - span: An `OutputSpan` covering uninitialized memory with
+  ///         space for `capacity` UTF-8 code units.
+  @available(SwiftStdlib 5.3, *)
+  @export(implementation)
+  public init<E: Error>(
+    repairingUTF8WithCapacity capacity: Int,
+    initializingUTF8With initializer: (
+      _ span: inout OutputSpan<UTF8.CodeUnit>
+    ) throws(E) -> Void
+  ) throws(E) {
+    try self.init(unsafeUninitializedCapacity: capacity) {
+      buffer throws(E) -> Int in
+      // Runtimes before Swift 5.10 can pass a larger buffer for small strings.
+      let output = unsafe UnsafeMutableBufferPointer(
+        start: buffer.baseAddress, count: capacity
+      )
+      var span = unsafe OutputSpan(buffer: output, initializedCount: 0)
+      try initializer(&span)
+      return unsafe span.finalize(for: output)
+    }
+  }
+
   /// Calls the given closure with a pointer to the contents of the string,
   /// represented as a null-terminated sequence of UTF-8 code units.
   ///

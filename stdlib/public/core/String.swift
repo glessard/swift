@@ -728,7 +728,8 @@ extension String {
     ) throws(E) -> Int
   ) throws(E) {
     if _fastPath(capacity <= _SmallString.capacity) {
-      let smol = try unsafe _SmallString(initializingUTF8With: { buffer throws(E) in
+      let smol = try unsafe _SmallString(initializingUncheckedUTF8With: {
+        buffer throws(E) in
         try unsafe initializer(.init(start: buffer.baseAddress, count: capacity))
       })
       // Fast case where we fit in a _SmallString and don't need UTF8 validation

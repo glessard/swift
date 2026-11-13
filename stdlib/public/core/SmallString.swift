@@ -334,15 +334,41 @@ extension _SmallString {
     self.init(leading: leading, trailing: trailing, count: count)
   }
 
+  /// Create an unvalidated small string.
   @inline(__always)
   internal init<E: Error>(
-    initializingUTF8With initializer: (
+    initializingUncheckedUTF8With initializer: (
       _ buffer: UnsafeMutableBufferPointer<UInt8>
     ) throws(E) -> Int
   ) throws(E) {
     self.init()
     try unsafe self.withMutableCapacity { buffer throws(E) in
       try unsafe buffer.withMemoryRebound(to: UInt8.self, initializer)
+    }
+    self._invariantCheck()
+  }
+
+  /// Create an unvalidated small string.
+  @unsafe
+  @inline(__always)
+  internal init<E: Error>(
+    capacity: Int,
+    initializingUncheckedUTF8With initializer: (
+      _ span: inout OutputSpan<UTF8.CodeUnit>
+    ) throws(E) -> Void
+  ) throws(E) {
+    _internalInvariant(capacity <= _SmallString.capacity)
+    self.init()
+    try unsafe self.withMutableCapacity { buffer throws(E) -> Int in
+      try unsafe buffer.withMemoryRebound(to: UInt8.self) {
+        bytes throws(E) -> Int in
+        let output = unsafe UnsafeMutableBufferPointer(
+          start: bytes.baseAddress, count: capacity
+        )
+        var span = unsafe OutputSpan(buffer: output, initializedCount: 0)
+        try initializer(&span)
+        return unsafe span.finalize(for: output)
+      }
     }
     self._invariantCheck()
   }

@@ -291,7 +291,7 @@ extension String {
     }
     var repairsMade = false
     if utf8Len <= _SmallString.capacity {
-      let smol = unsafe _SmallString(initializingUTF8With: {
+      let smol = unsafe _SmallString(initializingUncheckedUTF8With: {
         let (count, tmpRepairsMade) = unsafe transcodeUTF16ToUTF8(
           UTF16CodeUnits: input,
           intoKnownSufficientlyLarge: $0,

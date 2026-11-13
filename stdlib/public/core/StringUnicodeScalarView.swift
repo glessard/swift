@@ -371,6 +371,115 @@ extension String.UnicodeScalarView: RangeReplaceableCollection {
     self = (String(self._guts) + scalars).unicodeScalars
   }
 
+  /// Creates a new view with the specified capacity in UTF-8 code units, and
+  /// then calls the given closure with an output span to initialize the view's
+  /// contents.
+  ///
+  /// Inside the closure, initialize the view by appending UTF-8 code units to
+  /// the `OutputSpan`. The `OutputSpan` keeps track of the memory's
+  /// initialization state, ensuring safety. Its `count` at the end of the
+  /// closure is the length of the new view in UTF-8 code units.
+  ///
+  /// This initializer replaces ill-formed UTF-8 sequences with the Unicode
+  /// replacement character (`"\u{FFFD}"`). This may require resizing
+  /// the buffer beyond its original capacity.
+  ///
+  /// - Parameters:
+  ///   - capacity: The number of UTF-8 code units worth of memory to allocate
+  ///     for the view. `capacity` must not be negative.
+  ///   - initializer: A closure that initializes the contents of the new view.
+  ///     - Parameters:
+  ///       - span: An `OutputSpan` covering uninitialized memory with
+  ///         space for `capacity` UTF-8 code units.
+  @available(SwiftStdlib 5.3, *)
+  @export(implementation)
+  public init<E: Error>(
+    repairingUTF8WithCapacity capacity: Int,
+    initializingUTF8With initializer: (
+      _ span: inout OutputSpan<UTF8.CodeUnit>
+    ) throws(E) -> Void
+  ) throws(E) {
+    self = try String(
+      repairingUTF8WithCapacity: capacity, initializingUTF8With: initializer
+    ).unicodeScalars
+  }
+
+  /// Creates a new view with the specified capacity in UTF-8 code units, and
+  /// then calls the given closure with an output span to initialize the view's
+  /// contents.
+  ///
+  /// Inside the closure, initialize the view by appending UTF-8 code units to
+  /// the `OutputSpan`. The `OutputSpan` keeps track of the memory's
+  /// initialization state, ensuring safety. Its `count` at the end of the
+  /// closure is the length of the new view in UTF-8 code units.
+  ///
+  /// This initializer does not try to repair ill-formed code unit sequences.
+  /// If any are found, the result of the initializer is `nil`.
+  ///
+  /// - Parameters:
+  ///   - capacity: The number of UTF-8 code units worth of memory to allocate
+  ///     for the view. `capacity` must not be negative.
+  ///   - initializer: A closure that initializes the contents of the new view.
+  ///     - Parameters:
+  ///       - span: An `OutputSpan` covering uninitialized memory with
+  ///         space for `capacity` UTF-8 code units.
+  @available(SwiftStdlib 6.2, *)
+  @export(implementation)
+  public init?<E: Error>(
+    validatingUTF8WithCapacity capacity: Int,
+    initializingUTF8With initializer: (
+      _ span: inout OutputSpan<UTF8.CodeUnit>
+    ) throws(E) -> Void
+  ) throws(E) {
+    guard let string = try String(
+      validatingUTF8WithCapacity: capacity, initializingUTF8With: initializer
+    ) else {
+      return nil
+    }
+    self = string.unicodeScalars
+  }
+
+  /// Grows the view to have enough capacity for the specified number of
+  /// UTF-8 code units, then calls the closure with an output span covering the
+  /// view's uninitialized memory.
+  ///
+  /// Inside the closure, append UTF-8 code units to `span`. It ensures safety
+  /// by keeping track of the initialization state of the memory. At the end of
+  /// the closure, the `count` code units in `span` will have been appended to
+  /// the view.
+  ///
+  /// This method replaces ill-formed UTF-8 sequences in the appended code units
+  /// with the Unicode replacement character (`"\u{FFFD}"`). This may require
+  /// resizing the view beyond the requested capacity.
+  ///
+  /// If the closure throws an error, the code units appended until that point
+  /// remain in the view.
+  ///
+  /// - Parameters:
+  ///   - capacity: The number of UTF-8 code units the view should have space
+  ///     for in addition to its current contents. `capacity` must not be
+  ///     negative.
+  ///   - initializer: A closure that initializes new UTF-8 code units.
+  ///     - Parameters:
+  ///       - span: An `OutputSpan` covering uninitialized memory with
+  ///         space for `capacity` additional UTF-8 code units.
+  @available(SwiftStdlib 5.3, *)
+  @export(implementation)
+  public mutating func append<E: Error>(
+    addingUTF8Capacity capacity: Int,
+    initializingUTF8With initializer: (
+      _ span: inout OutputSpan<UTF8.CodeUnit>
+    ) throws(E) -> Void
+  ) throws(E) {
+    // Move the storage out of `self` so that `string` is its only reference.
+    var string = String(self)
+    self = String.UnicodeScalarView()
+    defer { self = string.unicodeScalars }
+    try string.append(
+      addingUTF8Capacity: capacity, initializingUTF8With: initializer
+    )
+  }
+
   /// Replaces the elements within the specified bounds with the given Unicode
   /// scalar values.
   ///

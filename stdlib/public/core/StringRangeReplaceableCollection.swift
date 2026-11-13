@@ -156,6 +156,59 @@ extension String: RangeReplaceableCollection {
     self._guts.append(newElements._gutsSlice)
   }
 
+  /// Grows the string to have enough capacity for the specified number of
+  /// UTF-8 code units, then calls the closure with an output span covering the
+  /// string's uninitialized memory.
+  ///
+  /// Inside the closure, append UTF-8 code units to `span`. It ensures safety
+  /// by keeping track of the initialization state of the memory. At the end of
+  /// the closure, the `count` code units in `span` will have been appended to
+  /// the string.
+  ///
+  /// This method replaces ill-formed UTF-8 sequences in the appended code units
+  /// with the Unicode replacement character (`"\u{FFFD}"`). This may require
+  /// resizing the string beyond the requested capacity.
+  ///
+  /// If the closure throws an error, the code units appended until that point
+  /// remain in the string.
+  ///
+  ///     var greeting = "Hello"
+  ///     greeting.append(addingUTF8Capacity: 8) { span in
+  ///         for byte in ", world".utf8 {
+  ///             span.append(byte)
+  ///         }
+  ///     }
+  ///     // greeting == "Hello, world"
+  ///
+  /// - Parameters:
+  ///   - capacity: The number of UTF-8 code units the string should have space
+  ///     for in addition to its current contents. `capacity` must not be
+  ///     negative.
+  ///   - initializer: A closure that initializes new UTF-8 code units.
+  ///     - Parameters:
+  ///       - span: An `OutputSpan` covering uninitialized memory with
+  ///         space for `capacity` additional UTF-8 code units.
+  @available(SwiftStdlib 5.3, *)
+  @export(implementation)
+  public mutating func append<E: Error>(
+    addingUTF8Capacity capacity: Int,
+    initializingUTF8With initializer: (
+      _ span: inout OutputSpan<UTF8.CodeUnit>
+    ) throws(E) -> Void
+  ) throws(E) {
+    var failure: E? = nil
+    let addition = String(repairingUTF8WithCapacity: capacity) {
+      (span: inout OutputSpan<UTF8.CodeUnit>) -> Void in
+      do throws(E) {
+        try initializer(&span)
+      } catch {
+        failure = error
+      }
+    }
+    self.append(addition)
+    if let failure { throw failure }
+  }
+
   /// Appends the characters in the given sequence to the string.
   ///
   /// - Parameter newElements: A sequence of characters.

@@ -814,6 +814,101 @@ extension String {
     }
   }
 
+  /// Creates a new string with the specified capacity in UTF-8 code units, and
+  /// then calls the given closure with an output span to initialize the
+  /// string's contents.
+  ///
+  /// Inside the closure, initialize the string by appending UTF-8 code units to
+  /// the `OutputSpan`. The `OutputSpan` keeps track of the memory's
+  /// initialization state, ensuring safety. Its `count` at the end of the
+  /// closure is the length of the new string in UTF-8 code units.
+  ///
+  /// This initializer does not try to repair ill-formed code unit sequences.
+  /// If any are found, the result of the initializer is `nil`.
+  ///
+  /// - Parameters:
+  ///   - capacity: The number of UTF-8 code units worth of memory to allocate
+  ///     for the string.
+  ///   - initializer: A closure that initializes the contents of the new
+  ///     string.
+  ///     - Parameters:
+  ///       - span: An `OutputSpan` covering uninitialized memory with
+  ///         space for `capacity` UTF-8 code units.
+  @available(SwiftStdlib 6.2, *)
+  @export(implementation)
+  public init?<E: Error>(
+    validatingUTF8WithCapacity capacity: Int,
+    initializingUTF8With initializer: (
+      _ span: inout OutputSpan<UTF8.CodeUnit>
+    ) throws(E) -> Void
+  ) throws(E) {
+    // FIXME: The availability macro is not valid here.
+    // Synchronize with value of `SwiftStdlib 9999` in availability-macros.def.
+    if #available(anyAppleOS 9999, *) {
+      let validated = try String._validatingUTF8(
+        capacity: capacity, initializingUTF8With: initializer
+      )
+      guard let validated else { return nil }
+      self = validated
+      return
+    }
+
+    var isWellFormed = true
+    let result = try String(repairingUTF8WithCapacity: capacity) {
+      span throws(E) in
+      try initializer(&span)
+      if let _ = try? UTF8Span(validating: span.span) {
+        return
+      }
+      isWellFormed = false
+      span.removeAll()
+    }
+    guard isWellFormed else { return nil }
+    self = result
+  }
+
+  /// Return a string made of the code units written by `initializer`, or `nil`
+  /// if they are ill-formed. Validate once, in the string's own storage.
+  @available(SwiftStdlib 9999, *)
+  @usableFromInline
+  internal static func _validatingUTF8<E: Error>(
+    capacity: Int,
+    initializingUTF8With initializer: (
+      _ span: inout OutputSpan<UTF8.CodeUnit>
+    ) throws(E) -> Void
+  ) throws(E) -> String? {
+    if _fastPath(capacity <= _SmallString.capacity) {
+      let smol = try unsafe _SmallString(
+        capacity: capacity, initializingUncheckedUTF8With: initializer
+      )
+      if _fastPath(smol.isASCII) {
+        return String(_StringGuts(smol))
+      }
+      return smol.withUTF8 { unsafe String._tryFromUTF8($0) }
+    }
+
+    func initialize(_ buffer: UnsafeMutableBufferPointer<UInt8>) throws(E) -> Int {
+      var span = unsafe OutputSpan(buffer: buffer, initializedCount: 0)
+      try initializer(&span)
+      return unsafe span.finalize(for: buffer)
+    }
+    let result = try unsafe __StringStorage.create(
+      uninitializedCodeUnitCapacity: capacity,
+      initializingUncheckedUTF8With: initialize)
+    defer { _fixLifetime(result) }
+
+    switch unsafe validateUTF8(result.codeUnits) {
+    case .success(let info):
+      result._updateCountAndFlags(
+        newCount: result.count,
+        newIsASCII: info.isASCII
+      )
+      return result.asString
+    case .error:
+      return nil
+    }
+  }
+
   /// Calls the given closure with a pointer to the contents of the string,
   /// represented as a null-terminated sequence of UTF-8 code units.
   ///
